@@ -313,7 +313,7 @@ test/scan: test/scan.c test/scan_tests.c $(ARLIB)
 test/split: test/split.c test/split_tests.c $(ARLIB)
 	$(CC) $(TEST_CFLAGS) -o $@ test/split.c $(ARLIB) $(TEST_LDFLAGS)
 
-prefix = /usr/local
+prefix ?= /usr/local
 libdir = $(prefix)/lib
 includedir = $(prefix)/include
 
