@@ -46,4 +46,4 @@ set_target_properties(pg_query PROPERTIES LINKER_LANGUAGE C)
 set_target_properties(pg_query PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 install(TARGETS pg_query DESTINATION lib)
-install(FILES nodes.h pg_list.h pg_query.h DESTINATION include)
+install(FILES parsenodes.h nodes.h pg_list.h pg_query.h DESTINATION include)
