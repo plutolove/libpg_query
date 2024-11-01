@@ -76,43 +76,43 @@ END;$$;
 --   EXECUTE func_cmd;
 -- END;$func$;
 
-CREATE OR REPLACE FUNCTION cs_parse_url(
-    v_url IN VARCHAR,
-    v_host OUT VARCHAR,  -- This will be passed back
-    v_path OUT VARCHAR,  -- This one too
-    v_query OUT VARCHAR) -- And this one
-AS $$
-DECLARE
-    a_pos1 INTEGER;
-    a_pos2 INTEGER;
-BEGIN
-    v_host := NULL;
-    v_path := NULL;
-    v_query := NULL;
-    a_pos1 := instr(v_url, '//');
-
-    IF a_pos1 = 0 THEN
-        RETURN;
-    END IF;
-    a_pos2 := instr(v_url, '/', a_pos1 + 2);
-    IF a_pos2 = 0 THEN
-        v_host := substr(v_url, a_pos1 + 2);
-        v_path := '/';
-        RETURN;
-    END IF;
-
-    v_host := substr(v_url, a_pos1 + 2, a_pos2 - a_pos1 - 2);
-    a_pos1 := instr(v_url, '?', a_pos2 + 1);
-
-    IF a_pos1 = 0 THEN
-        v_path := substr(v_url, a_pos2);
-        RETURN;
-    END IF;
-
-    v_path := substr(v_url, a_pos2, a_pos1 - a_pos2);
-    v_query := substr(v_url, a_pos1 + 1);
-END;
-$$ LANGUAGE plpgsql;
+-- CREATE OR REPLACE FUNCTION cs_parse_url(
+--     v_url IN VARCHAR,
+--     v_host OUT VARCHAR,  -- This will be passed back
+--     v_path OUT VARCHAR,  -- This one too
+--     v_query OUT VARCHAR) -- And this one
+-- AS $$
+-- DECLARE
+--     a_pos1 INTEGER;
+--     a_pos2 INTEGER;
+-- BEGIN
+--     v_host := NULL;
+--     v_path := NULL;
+--     v_query := NULL;
+--     a_pos1 := instr(v_url, '//');
+--
+--     IF a_pos1 = 0 THEN
+--         RETURN;
+--     END IF;
+--     a_pos2 := instr(v_url, '/', a_pos1 + 2);
+--     IF a_pos2 = 0 THEN
+--         v_host := substr(v_url, a_pos1 + 2);
+--         v_path := '/';
+--         RETURN;
+--     END IF;
+--
+--     v_host := substr(v_url, a_pos1 + 2, a_pos2 - a_pos1 - 2);
+--     a_pos1 := instr(v_url, '?', a_pos2 + 1);
+--
+--     IF a_pos1 = 0 THEN
+--         v_path := substr(v_url, a_pos2);
+--         RETURN;
+--     END IF;
+--
+--     v_path := substr(v_url, a_pos2, a_pos1 - a_pos2);
+--     v_query := substr(v_url, a_pos1 + 1);
+-- END;
+-- $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION cs_create_job(v_job_id integer) RETURNS void AS $$
 DECLARE
@@ -449,164 +449,3 @@ BEGIN
 	INSERT INTO list(key,date) VALUES(NEW.key,NEW.end);
 	RETURN NEW;
 END;$$;
-
-CREATE OR REPLACE FUNCTION test.test_parse (
-    p_time_start timestamptz,
-    p_time_end timestamptz,
-    p_time_interval interval default NULL
-) RETURNS TABLE (
-    ts timestamptz,
-    arbitrary_return bigint
-) AS $$
-BEGIN
-    -- some comment
-    -- some other comment
-
-    IF p_time_interval IS NULL
-        THEN p_time_interval := interval_from_start_end(p_time_start, p_time_end);
-    END IF;
-    RETURN QUERY
-    SELECT
-        bucket_function(p_time_interval, timestamp) AS ts,
-        arbitrary_return
-    FROM test.some_table
-    WHERE
-        start >= p_time_start
-        AND "end" < p_time_end
-    GROUP BY 1;
-END; $$ LANGUAGE plpgsql SECURITY DEFINER PARALLEL UNSAFE;
-
-CREATE FUNCTION public.somefunc(OUT _result uuid[])
-    RETURNS uuid[]
-    LANGUAGE 'plpgsql'
-
-AS $BODY$
-DECLARE
-	active_on_to_date uuid[];
-BEGIN
-_result := ARRAY( SELECT some_id FROM some_table);
-END;
-$BODY$;
-
-CREATE OR REPLACE FUNCTION cs_fmt_browser_version(v_name varchar, v_version varchar)
-RETURNS varchar AS $$
-DECLARE
-_a int;
-_v_name_alias ALIAS FOR $1;
-BEGIN
-IF v_version IS NULL THEN
-RETURN v_name;
-END IF;
-
-RETURN v_name || '/' || v_version;
-END; $$ LANGUAGE plpgsql;
-
-CREATE FUNCTION test(str character varying) RETURNS integer
-LANGUAGE plpgsql
-AS $$
-DECLARE
-  v3 RECORD;
-  v4 integer;
-BEGIN
-  select 1 as c1, 2 as c2 into v3;
-  v3.c1 := 4;
-END;$$;
-
-CREATE FUNCTION test_assert() RETURNS integer
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  ASSERT true;
-  ASSERT now() < '2000-01-01';
-  ASSERT false, 'msg';
-  ASSERT false, version();
-
-  RETURN 1;
-END;$$;
-
--- Example from https://www.postgresql.org/docs/current/sql-do.html
-DO $$DECLARE r record;
-BEGIN
-    FOR r IN SELECT table_schema, table_name FROM information_schema.tables
-             WHERE table_type = 'VIEW' AND table_schema = 'public'
-    LOOP
-        EXECUTE 'GRANT ALL ON ' || quote_ident(r.table_schema) || '.' || quote_ident(r.table_name) || ' TO webuser';
-    END LOOP;
-END$$;
-
-CREATE FUNCTION test_cursor() RETURNS void AS $$
-  DECLARE
-    i INT;
-    c CURSOR FOR SELECT generate_series(1,10);
-  BEGIN
-    FOR i IN c LOOP
-      RAISE NOTICE 'i is %',i;
-    END LOOP;
-  END
-$$ language plpgsql;
-
-CREATE FUNCTION public.dz_sumfunc(
-    IN  p_in  INTEGER
-    ,OUT p_out public.dz_sumthing
-)
-AS $BODY$
-DECLARE
-BEGIN
-    p_out.sumattribute := p_in;
-END;
-$BODY$
-LANGUAGE plpgsql;
-
--- Examples from https://www.postgresql.org/docs/16/plpgsql-declarations.html#PLPGSQL-DECLARATION-PARAMETERS
-CREATE FUNCTION sales_tax(real) RETURNS real AS $$
-DECLARE
-    subtotal ALIAS FOR $1;
-BEGIN
-    RETURN subtotal * 0.06;
-END;
-$$ LANGUAGE plpgsql;
-
--- RETURN NEXT; with no expression https://www.postgresql.org/docs/16/plpgsql-control-structures.html#PLPGSQL-STATEMENTS-RETURNING-RETURN-NEXT
-CREATE OR REPLACE FUNCTION public.test_pl(s integer, e integer)
-  RETURNS TABLE(id INTEGER) AS $$
-BEGIN
-  id := s;
-LOOP
-  EXIT WHEN id>e;
-  RETURN NEXT;
-  id := id + 1;
-END LOOP;
-END
-$$
-  LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION trgfn()
- RETURNS trigger AS $$
-DECLARE
- prior ALIAS FOR old;
- updated ALIAS FOR new;
-BEGIN
- RETURN;
-END;
-$$
-  LANGUAGE plpgsql;
-
--- Example from https://www.postgresql.org/docs/16/plpgsql-cursors.html
-CREATE FUNCTION reffunc2() RETURNS refcursor AS '
-DECLARE
-    ref refcursor;
-BEGIN
-    OPEN ref FOR SELECT col FROM test;
-    RETURN ref;
-END;
-' LANGUAGE plpgsql;
-
--- Example from https://www.postgresql.org/docs/16/plpgsql-declarations.html#PLPGSQL-DECLARATION-COLLATION
-CREATE FUNCTION less_than(a text, b text) RETURNS boolean AS $$
-DECLARE
-    local_a text COLLATE "en_US" := a;
-    local_b text := b;
-BEGIN
-    RETURN local_a < local_b;
-END;
-$$ LANGUAGE plpgsql;
