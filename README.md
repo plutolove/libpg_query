@@ -1,153 +1,133 @@
-# libpg_query [![Build Status](https://travis-ci.org/lfittl/libpg_query.svg?branch=master)](https://travis-ci.org/lfittl/libpg_query)
+# Modified Postgres Parser
 
-C library for accessing the PostgreSQL parser outside of the server.
+This directory holds the core parser that is used by DuckDB. It is based on the [Postgres parser](https://github.com/pganalyze/libpg_query), but has been stripped down and generally cleaned up to make it easier to modify and extend.
 
-This library uses the actual PostgreSQL server source to parse SQL queries and return the internal PostgreSQL parse tree.
+The most important changes made are listed here:
+* The output format has been changed to C++
+* The parser and all its auxiliary structures are wrapped in the `duckdb_libpgquery` namespace.
+* The parser has been split up into multiple different files instead of living in one big file.
+* Duplication is reduced and code is simplified by e.g. not requiring the same keyword or statement to be declared in multiple different places. 
 
-Note that this is mostly intended as a base library for https://github.com/lfittl/pg_query (Ruby), https://github.com/lfittl/pg_query.go (Go), https://github.com/zhm/pg-query-parser (Node) and https://github.com/alculquicondor/psqlparse (Python).
+# Compiling the Parser
+The parser is converted to C++ using flex/bison. It is usually run on a Macbook, and has been tested with the following versions of flex/bison:
 
-You can find further background to why a query's parse tree is useful here: https://pganalyze.com/blog/parse-postgresql-queries-in-ruby.html
-
-
-## Installation
-
-```sh
-git clone -b 9.5-latest git://github.com/lfittl/libpg_query
-cd libpg_query
-make
+```bash
+yac --flex 2.5.35 Apple(flex-32)
+bison (GNU Bison) 2.3
 ```
 
-Due to compiling parts of PostgreSQL, running `make` will take a bit. Expect up to 3 minutes.
+In order to compile the grammar, run the following command:
 
-For a production build, its best to use a specific git tag (see CHANGELOG).
+```bash
+python3 scripts/generate_grammar.py
+```
+Depending on how you installed bison, you may need to pass `--bison=/usr/bin/bison` to the above command.
 
+In order to compile the lexer, run the following command:
 
-## Usage: Parsing a query
+```bash
+python3 scripts/generate_flex.py
+```
 
-A [full example](https://github.com/lfittl/libpg_query/blob/master/examples/simple.c) that parses a query looks like this:
+# Modifying the Grammar
+In order to modify the grammar, you will generally need to change files in the `third_party/libpg_query/grammar` directory.
 
+The grammar is divided in separate files in the `statements` directory. The bulk of the grammar (expressions, types, etc) are found in the `select.y` file. This is likely the file you will want to edit.
+
+### Short Bison Intro
+Bison is defined in terms of rules. Each rule defines a *return type*. The return types of the rules should be defined in the corresponding `.yh` file (for example, for the `select.y`, the return types are defined in `third_party/libpg_query/grammar/types/select.yh`).
+
+Rules generally reference other rules using the grammar. Each rule contains inline C code. The C code describes how to compose the result objects from the grammar.
+
+The result objects are primarily defined in `third_party/libpg_query/include/nodes/parsenodes.hpp`, and are mostly taken over from Postgres. The parse nodes are converted into DuckDB's internal representation in the Transformer phase. 
+
+As an example, let's look at a rule:
+
+### Rule Example
+```yacc
+from_list:
+            table_ref                   { $$ = list_make1($1); }
+            | from_list ',' table_ref   { $$ = lappend($1, $3); }
+        ;
+```
+
+We see here the rule with the name `from_list`. This describes the list of tables found in the FROM clause of a SELECT statement. 
+
+Rules can be composed using a chain of one or more OR statements (`|`). The rule can be satisfied using either section of the OR statement.
+
+As we see, the rules can also be recursive. In this case, we can have as many table references as we like. For example, the following are all valid SQL:
+
+```sql
+SELECT * FROM a;
+SELECT * FROM a, b;
+SELECT * FROM a, b, c, d, e, f;
+```
+
+Recursive statements are generally used to generate lists. The recursion happens on the left side, and a new list is created in the left-most element.
+
+Note that in the generated C code we see two special symbols: `$$` and `$1`. `$$` is the *return value* of the rule. The `$1, $2, $3, etc` symbols refer to the sub-rules.
+
+For example, in this part of the statement:
+```yacc
+   from_list ',' table_ref   { $$ = lappend($1, $3); }
+```
+We are really saying: take the return value of `from_list` (a list) and the return value of `table_ref` (a node) and append it to the list. That list then becomes the return value. Note that we use `$3` to refer to `table_ref`. That is because the second rule (`$2`)  is actually the comma in the middle.
+
+`list_make1` and `lappend` are regular C functions defined by Postgres (see `third_party/libpg_query/include/nodes/pg_list.hpp`).
+
+### Return Values
+As stated before, rules have return values. The return values must be defined in the corresponding `.yh` files. For example, for `select.y`, the corresponding `.yh` file is `third_party/libpg_query/grammar/types/select.yh`. 
+
+We can find the following type definitions there for our previous example:
+
+```yacc
+%type <list> from_list
+%type <node> table_ref
+```
+
+The names given here correspond to C objects and are defined in `third_party/libpg_query/grammar/grammar.y`.
 ```c
-#include <pg_query.h>
-#include <stdio.h>
-
-int main() {
-  PgQueryParseResult result;
-
-  result = pg_query_parse("SELECT 1");
-
-  printf("%s\n", result.parse_tree);
-
-  pg_query_free_parse_result(result);
-}
+%union
+{
+  ...
+  PGList *list;
+  PGNode *node;
+  ...
+};
 ```
 
-Compile it like this:
+Most rules return either a `PGNode` (which is the parent class of almost all parse nodes), or a `PGList` (generally a list of nodes). Other common return values are `ival`, `str`, `boolean` and `value`.
+
+### Adding a Keyword
+Keywords are defined in the various keyword lists in `third_party/libpg_query/grammar/keywords`.
 
 ```
-cc -Ilibpg_query -Llibpg_query -lpg_query example.c
+unreserved_keywords.list
+column_name_keywords.list
+func_name_keywords.list
+type_name_keywords.list
+reserved_keywords.list
 ```
 
-This will output:
+The list in which you add a keyword determines where the keyword can be used.
 
-```json
-[{"SELECT": {"distinctClause": null, "intoClause": null, "targetList": [{"RESTARGET": {"name": null, "indirection": null, "val": {"A_CONST": {"val": 1, "location": 7}}, "location": 7}}], "fromClause": null, "whereClause": null, "groupClause": null, "havingClause": null, "windowClause": null, "valuesLists": null, "sortClause": null, "limitOffset": null, "limitCount": null, "lockingClause": null, "withClause": null, "op": 0, "all": false, "larg": null, "rarg": null}}]
-```
+It is heavily preferred that keywords are added to the `unreserved_keywords.list`. Keywords added to this list can still be used as column names, type names and function names by users of the system.
 
+The `reserved_keywords.list` on the other hand heavily restricts the usage of the specific keyword. It should only be used if there is no other option, as reserved keywords can break people's code.
 
-## Usage: Fingerprinting a query
+The other lists exist for keywords that are not *entirely* reserved, but are partially reserved. 
+* A keyword in `column_name_keywords.list` can be used as a column name.
+* A keyword in `func_name_keywords.list` can be used as a function name.
+* A keyword in `type_name_keywords.list` can be used as a type name.
 
-Fingerprinting allows you to identify similar queries that are different only because
-of the specific object that is being queried for (i.e. different object ids in the WHERE clause),
-or because of formatting.
+Note that these lists are not mutually exclusive. A keyword can be added to *both* `column_name_keywords.list` and `func_name_keywords.list`.
 
-Example:
+Adding a keyword to all three of these lists is equivalent to adding an unreserved keyword (and hence the keyword should just be added there).
 
-```c
-#include <pg_query.h>
-#include <stdio.h>
+### Adding a Statement Type
+A new statement type can be defined by creating two new files (`new_statement.y` and `new_statement.yh`), and adding the top-level statement to the list of statements (`third_party/libpg_query/grammar/statements.list`).
 
-int main() {
-  PgQueryFingerprintResult result;
+As an example, it is recommended to look at the PragmaStmt (`pragma.y`).
 
-  result = pg_query_fingerprint("SELECT 1");
-
-  printf("%s\n", result.hexdigest);
-
-  pg_query_free_fingerprint_result(result);
-}
-```
-
-This will output:
-
-```
-8e1acac181c6d28f4a923392cf1c4eda49ee4cd2
-```
-
-See https://github.com/lfittl/libpg_query/wiki/Fingerprinting for the full fingerprinting rules.
-
-## Usage: Parsing a PL/pgSQL function (Experimental)
-
-A [full example](https://github.com/lfittl/libpg_query/blob/master/examples/simple_plpgsql.c) that parses a [PL/pgSQL](https://www.postgresql.org/docs/current/static/plpgsql.html) method looks like this:
-
-```c
-#include <pg_query.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-int main() {
-  PgQueryPlpgsqlParseResult result;
-
-  result = pg_query_parse_plpgsql(" \
-  CREATE OR REPLACE FUNCTION cs_fmt_browser_version(v_name varchar, \
-                                                  v_version varchar) \
-RETURNS varchar AS $$ \
-BEGIN \
-    IF v_version IS NULL THEN \
-        RETURN v_name; \
-    END IF; \
-    RETURN v_name || '/' || v_version; \
-END; \
-$$ LANGUAGE plpgsql;");
-
-  if (result.error) {
-    printf("error: %s at %d\n", result.error->message, result.error->cursorpos);
-  } else {
-    printf("%s\n", result.plpgsql_funcs);
-  }
-
-  pg_query_free_plpgsql_parse_result(result);
-
-  return 0;
-}
-```
-
-This will output:
-
-```json
-[
-{"PLpgSQL_function": {"datums": [{"PLpgSQL_var": {"refname": "found", "datatype": {"PLpgSQL_type": {"typname": "UNKNOWN"}}}}], "action": {"PLpgSQL_stmt_block": {"lineno": 1, "body": [{"PLpgSQL_stmt_if": {"lineno": 1, "cond": {"PLpgSQL_expr": {"query": "SELECT v_version IS NULL"}}, "then_body": [{"PLpgSQL_stmt_return": {"lineno": 1, "expr": {"PLpgSQL_expr": {"query": "SELECT v_name"}}}}]}}, {"PLpgSQL_stmt_return": {"lineno": 1, "expr": {"PLpgSQL_expr": {"query": "SELECT v_name || '/' || v_version"}}}}]}}}}
-]
-```
-
-## Versions
-
-For stability, it is recommended you use individual tagged git versions, see CHANGELOG.
-
-Current `master` reflects a PostgreSQL base version of 9.4, with a legacy output format.
-
-New development is happening on `9.5-latest`, which will become `master` in the future.
-
-
-## Authors
-
-- [Lukas Fittl](mailto:lukas@fittl.com)
-
-
-## License
-
-PostgreSQL server source code, used under the [PostgreSQL license](https://www.postgresql.org/about/licence/).<br>
-Portions Copyright (c) 1996-2016, The PostgreSQL Global Development Group<br>
-Portions Copyright (c) 1994, The Regents of the University of California
-
-All other parts are licensed under the 3-clause BSD license, see LICENSE file for details.<br>
-Copyright (c) 2016, Lukas Fittl <lukas@fittl.com>
+# Modifying the Lexer
+The lexer file is provided in `third_party/libpg_query/scan.l`. After changing the lexer, run `python3 scripts/generate_flex.py`. 

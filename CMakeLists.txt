@@ -1,49 +1,34 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.5...3.29)
 
-project(pg_query
-        VERSION 0.1.0.0
-        DESCRIPTION "NoisePage trying to use libpg_query."
-        LANGUAGES CXX C
-        )
+project(duckdb_pg_query CXX C)
+if(POLICY CMP0063)
+    cmake_policy(SET CMP0063 NEW)
+endif()
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
-# Compile all the .c files.
-file(GLOB_RECURSE
-        PG_QUERY_SRCS
-        CONFIGURE_DEPENDS
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c
-        )
-# TODO(WAN): I have no clue why these were removed, or if there are more that can be removed. Probably yes.
-list(REMOVE_ITEM
-        PG_QUERY_SRCS
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/pg_query_fingerprint_defs.c"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/pg_query_fingerprint_conds.c"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/pg_query_json_defs.c"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/pg_query_json_conds.c"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/postgres/guc-file.c"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/postgres/scan.c"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/pg_query_json_helper.c"
-        )
+add_library(duckdb_pg_query STATIC
+            postgres_parser.cpp
+            pg_functions.cpp
+            src_backend_parser_parser.cpp
+            src_backend_parser_gram.cpp
+            src_backend_nodes_list.cpp
+            src_backend_parser_scansup.cpp
+            src_backend_nodes_makefuncs.cpp
+            src_backend_nodes_value.cpp
+            src_backend_parser_scan.cpp
+            src_common_keywords.cpp)
 
-# Create the pg_query library along with a namespaced alias.
-add_library(pg_query STATIC "${PG_QUERY_SRCS}")
-add_library(${PROJECT_NAME}::pg_query ALIAS pg_query)
-
-# Specify all the necessary includes.
 target_include_directories(
-        pg_query
-        SYSTEM PUBLIC
-        # These includes are exposed to the users of this library.
-        ${CMAKE_CURRENT_SOURCE_DIR}/../src/postgres/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/..
-        PRIVATE
-        # These includes are library-internal and necessary for compilation.
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/postgres/include
-        ${CMAKE_CURRENT_SOURCE_DIR}
-)
-set_target_properties(pg_query PROPERTIES COMPILE_FLAGS "-w")
+  duckdb_pg_query
+  PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+set_target_properties(duckdb_pg_query PROPERTIES EXPORT_NAME duckdb_duckdb_pg_query)
 
-set_target_properties(pg_query PROPERTIES LINKER_LANGUAGE C)
-set_target_properties(pg_query PROPERTIES POSITION_INDEPENDENT_CODE ON)
+install(TARGETS duckdb_pg_query
+        EXPORT "${DUCKDB_EXPORT_SET}"
+        LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
+        ARCHIVE DESTINATION "${INSTALL_LIB_DIR}")
 
-install(TARGETS pg_query DESTINATION lib)
-install(FILES parsenodes.h nodes.h pg_list.h pg_query.h DESTINATION include)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/
+        DESTINATION include)
+
+set_target_properties(duckdb_pg_query PROPERTIES POSITION_INDEPENDENT_CODE ON)
