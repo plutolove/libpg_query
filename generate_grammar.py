@@ -9,7 +9,7 @@ from python_helpers import open_utf8
 
 bison_location = "bison"
 base_dir = './grammar'
-pg_dir = './libpg_query'
+pg_dir = './'
 namespace = 'duckdb_libpgquery'
 
 counterexamples = False
