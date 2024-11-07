@@ -46,7 +46,7 @@ rule_dir = os.path.join(base_dir, 'statements')
 result_source = os.path.join(base_dir, 'grammar_out.cpp')
 result_header = os.path.join(base_dir, 'grammar_out.hpp')
 target_source_loc = os.path.join(pg_dir, 'src_backend_parser_gram.cpp')
-target_header_loc = os.path.join(pg_dir, 'include/parser/gram.hpp')
+target_header_loc = os.path.join(pg_dir, 'include/parser/gram.h.inc')
 kwlist_header = os.path.join(pg_dir, 'include/parser/kwlist.hpp')
 
 
@@ -107,6 +107,7 @@ kwlist.sort(key=lambda x: strip_p(x[0]))
 # PG_KEYWORD("abort", ABORT_P, UNRESERVED_KEYWORD)
 kwtext = (
     """
+#include "parser/gramparse.hpp"
 namespace """
     + namespace
     + """ {
@@ -302,7 +303,7 @@ os.rename(result_header, target_header_loc)
 with open_utf8(target_source_loc, 'r') as f:
     text = f.read()
 
-text = text.replace('#include "grammar_out.hpp"', '#include "include/parser/gram.hpp"')
+text = text.replace('#include "grammar_out.hpp"', '#include "include/parser/gram.h.inc"')
 text = text.replace('yynerrs = 0;', 'yynerrs = 0; (void)yynerrs;')
 
 with open_utf8(target_source_loc, 'w+') as f:

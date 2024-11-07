@@ -22,7 +22,7 @@
 #include "parser/scanner.hpp"
 
 namespace duckdb_libpgquery {
-#include "parser/gram.hpp"
+#include "parser/gram.h.inc"
 
 /*
  * The YY_EXTRA data that a flex scanner allows us to pass around.  Private
