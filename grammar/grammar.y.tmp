@@ -282,41 +282,49 @@ static PGNode *makeLimitPercent(PGNode *limit_percent);
 %type <node> stmt
 %type <list> stmtblock
 %type <list> stmtmulti
-%type <list> prep_type_clause
-%type <node> PreparableStmt
-%type <str> opt_storage_drop_specifier
-%type <boolean> copy_from
-%type <defelt> copy_delimiter
-%type <list> copy_generic_opt_arg_list
-%type <ival> opt_as
-%type <boolean> opt_program
-%type <list> copy_options
-%type <node> copy_generic_opt_arg
-%type <defelt> copy_generic_opt_elem
-%type <defelt> opt_oids
-%type <list> copy_opt_list
-%type <defelt> opt_binary
-%type <defelt> copy_opt_item
-%type <node> copy_generic_opt_arg_list_item
-%type <str> copy_file_name
-%type <list> copy_generic_opt_list
-%type <conststr> copy_database_flag%type <str> opt_secret_name opt_persist opt_storage_specifier
-%type <list> SeqOptList
-%type <value> NumericOnly
-%type <defelt> SeqOptElem
-%type <ival> SignedIconst
-%type <list> OptSeqOptList
-%type <vsetstmt> set_rest
-%type <vsetstmt> generic_set
-%type <node> var_value
-%type <node> zone_value
-%type <list> var_list
-%type <transactiontype> opt_transaction_type
-%type <ival> vacuum_option_elem
-%type <boolean> opt_full
-%type <ival> vacuum_option_list
-%type <boolean> opt_freeze
-%type <node>	select_no_parens select_with_parens select_clause
+%type <range>	qualified_name
+%type <str>		Sconst  ColId   ColLabel    ColIdOrString
+%type <keyword> unreserved_keyword  reserved_keyword other_keyword
+%type <list> indirection
+%type <keyword> col_name_keyword
+%type <node>    indirection_el
+%type <str>	    attr_name%type <str> var_name
+%type <viewcheckoption> opt_check_option
+%type <list> alter_identity_column_option_list
+%type <node> alter_column_default
+%type <defelt> alter_identity_column_option
+%type <list> alter_generic_option_list
+%type <node> alter_table_cmd
+%type <node> alter_using
+%type <defelt> alter_generic_option_elem
+%type <list> alter_table_cmds
+%type <list> alter_generic_options
+%type <ival> opt_set_data
+%type <istmt> insert_rest
+%type <range> insert_target
+%type <infer> opt_conf_expr
+%type <with> opt_with_clause
+%type <target> insert_column_item
+%type <list> set_clause
+%type <onconflict> opt_on_conflict
+%type <onconflictshorthand> opt_or_action
+%type <bynameorposition> opt_by_name_or_position
+%type <ielem> index_elem
+%type <list> returning_clause
+%type <override> override_kind
+%type <list> set_target_list
+%type <list> opt_collate
+%type <list> opt_class
+%type <list> insert_column_list
+%type <list> set_clause_list set_clause_list_opt_comma
+%type <list> index_params
+%type <target> set_target
+%type <list> param_list
+%type <node> macro_definition table_macro_definition table_macro_definition_parens
+%type <list> macro_definition_list table_macro_list table_macro_list_internal%type <str> opt_storage_drop_specifier
+%type <str> file_name
+%type <str> opt_ext_version
+%type <loadinstalltype> opt_force%type <node>	select_no_parens select_with_parens select_clause
 				simple_select values_clause values_clause_opt_comma
 
 
@@ -451,6 +459,14 @@ static PGNode *makeLimitPercent(PGNode *limit_percent);
 %type <node> pivot_value pivot_column_entry single_pivot_value unpivot_value
 %type <list> pivot_value_list pivot_column_list_internal pivot_column_list pivot_header opt_pivot_group_by unpivot_value_list
 %type <boolean> opt_include_nulls
+%type <objtype> drop_type_any_name
+%type <objtype> drop_type_name
+%type <list> any_name_list
+%type <dbehavior> opt_drop_behavior
+%type <objtype> drop_type_name_on_any_name
+%type <list> type_name_list
+%type <list> prep_type_clause
+%type <node> PreparableStmt
 %type <boolean> opt_verbose
 %type <node> explain_option_arg
 %type <node> ExplainableStmt
@@ -460,26 +476,12 @@ static PGNode *makeLimitPercent(PGNode *limit_percent);
 %type <str> opt_boolean_or_string
 %type <defelt> explain_option_elem
 %type <str> explain_option_name
-%type <objtype> drop_type_any_name
-%type <objtype> drop_type_name
-%type <list> any_name_list
-%type <dbehavior> opt_drop_behavior
-%type <objtype> drop_type_name_on_any_name
-%type <list> type_name_list
-%type <str> opt_col_id
-%type <str> var_name
-%type <node> comment_value
-%type <objtype> comment_on_type_any_name%type <viewcheckoption> opt_check_option
-%type <list> param_list
-%type <node> macro_definition table_macro_definition table_macro_definition_parens
-%type <list> macro_definition_list table_macro_list table_macro_list_internal%type <list> OptSchemaEltList
+%type <list> OptSeqOptList
+%type <range> relation_expr_opt_alias
+%type <node> where_or_current_clause
+%type <list> using_clause
+%type <list> OptSchemaEltList
 %type <node> schema_stmt
-%type <str> access_method
-%type <str> access_method_clause
-%type <boolean> opt_concurrently
-%type <str> opt_index_name
-%type <list> opt_reloptions
-%type <boolean> opt_unique
 %type <ival> opt_column%type <ival> ConstraintAttributeSpec
 %type <node> def_arg
 %type <list> OptParenthesizedSeqOptList
@@ -524,56 +526,54 @@ static PGNode *makeLimitPercent(PGNode *limit_percent);
 %type <node> TableLikeClause
 %type <ival> OptTemp
 %type <ival> generated_when
-%type <list> alter_identity_column_option_list
-%type <node> alter_column_default
-%type <defelt> alter_identity_column_option
-%type <list> alter_generic_option_list
-%type <node> alter_table_cmd
-%type <node> alter_using
-%type <defelt> alter_generic_option_elem
-%type <list> alter_table_cmds
-%type <list> alter_generic_options
-%type <ival> opt_set_data
+%type <vsetstmt> set_rest
+%type <vsetstmt> generic_set
+%type <node> var_value
+%type <node> zone_value
+%type <list> var_list
+%type <str> access_method
+%type <str> access_method_clause
+%type <boolean> opt_concurrently
+%type <str> opt_index_name
+%type <list> opt_reloptions
+%type <boolean> opt_unique
+%type <str> opt_col_id
+%type <vsetstmt> generic_reset
+%type <vsetstmt> reset_rest
+%type <list> SeqOptList
+%type <value> NumericOnly
+%type <defelt> SeqOptElem
+%type <ival> SignedIconst
+%type <str> opt_secret_name opt_persist opt_storage_specifier
 %type <list> execute_param_clause
 %type <list> execute_param_list
-%type <node> execute_param_expr%type <vsetstmt> generic_reset
-%type <vsetstmt> reset_rest
-%type <str> file_name
-%type <str> opt_ext_version
-%type <loadinstalltype> opt_force%type <istmt> insert_rest
-%type <range> insert_target
-%type <infer> opt_conf_expr
-%type <with> opt_with_clause
-%type <target> insert_column_item
-%type <list> set_clause
-%type <onconflict> opt_on_conflict
-%type <onconflictshorthand> opt_or_action
-%type <bynameorposition> opt_by_name_or_position
-%type <ielem> index_elem
-%type <list> returning_clause
-%type <override> override_kind
-%type <list> set_target_list
-%type <list> opt_collate
-%type <list> opt_class
-%type <list> insert_column_list
-%type <list> set_clause_list set_clause_list_opt_comma
-%type <list> index_params
-%type <target> set_target
-%type <list> opt_enum_val_list
+%type <node> execute_param_expr%type <transactiontype> opt_transaction_type
+%type <node> comment_value
+%type <objtype> comment_on_type_any_name%type <ival> vacuum_option_elem
+%type <boolean> opt_full
+%type <ival> vacuum_option_list
+%type <boolean> opt_freeze
+%type <boolean> opt_with_data
+%type <into> create_as_target
+%type <boolean> copy_from
+%type <defelt> copy_delimiter
+%type <list> copy_generic_opt_arg_list
+%type <ival> opt_as
+%type <boolean> opt_program
+%type <list> copy_options
+%type <node> copy_generic_opt_arg
+%type <defelt> copy_generic_opt_elem
+%type <defelt> opt_oids
+%type <list> copy_opt_list
+%type <defelt> opt_binary
+%type <defelt> copy_opt_item
+%type <node> copy_generic_opt_arg_list_item
+%type <str> copy_file_name
+%type <list> copy_generic_opt_list
+%type <conststr> copy_database_flag%type <list> opt_enum_val_list
 %type <list> enum_val_list
 %type <str> opt_database_alias
 %type <list> ident_list ident_name
-%type <range>	qualified_name
-%type <str>		Sconst  ColId   ColLabel    ColIdOrString
-%type <keyword> unreserved_keyword  reserved_keyword other_keyword
-%type <list> indirection
-%type <keyword> col_name_keyword
-%type <node>    indirection_el
-%type <str>	    attr_name%type <boolean> opt_with_data
-%type <into> create_as_target
-%type <range> relation_expr_opt_alias
-%type <node> where_or_current_clause
-%type <list> using_clause
 %type <node> AlterObjectSchemaStmt
 %type <node> AlterSeqStmt
 %type <node> AlterTableStmt
@@ -805,6 +805,498 @@ stmt: AlterObjectSchemaStmt
 	{ $$ = NULL; }
 
 
+#line 1 "./grammar/statements/alter_table.y"
+/*****************************************************************************
+ *
+ *	ALTER [ TABLE | INDEX | SEQUENCE | VIEW | MATERIALIZED VIEW ] variations
+ *
+ * Note: we accept all subcommands for each of the five variants, and sort
+ * out what's really legal at execution time.
+ *****************************************************************************/
+AlterTableStmt:
+			ALTER TABLE relation_expr alter_table_cmds
+				{
+					PGAlterTableStmt *n = makeNode(PGAlterTableStmt);
+					n->relation = $3;
+					n->cmds = $4;
+					n->relkind = PG_OBJECT_TABLE;
+					n->missing_ok = false;
+					$$ = (PGNode *)n;
+				}
+		|	ALTER TABLE IF_P EXISTS relation_expr alter_table_cmds
+				{
+					PGAlterTableStmt *n = makeNode(PGAlterTableStmt);
+					n->relation = $5;
+					n->cmds = $6;
+					n->relkind = PG_OBJECT_TABLE;
+					n->missing_ok = true;
+					$$ = (PGNode *)n;
+				}
+		|	ALTER INDEX qualified_name alter_table_cmds
+				{
+					PGAlterTableStmt *n = makeNode(PGAlterTableStmt);
+					n->relation = $3;
+					n->cmds = $4;
+					n->relkind = PG_OBJECT_INDEX;
+					n->missing_ok = false;
+					$$ = (PGNode *)n;
+				}
+		|	ALTER INDEX IF_P EXISTS qualified_name alter_table_cmds
+				{
+					PGAlterTableStmt *n = makeNode(PGAlterTableStmt);
+					n->relation = $5;
+					n->cmds = $6;
+					n->relkind = PG_OBJECT_INDEX;
+					n->missing_ok = true;
+					$$ = (PGNode *)n;
+				}
+		|	ALTER SEQUENCE qualified_name alter_table_cmds
+				{
+					PGAlterTableStmt *n = makeNode(PGAlterTableStmt);
+					n->relation = $3;
+					n->cmds = $4;
+					n->relkind = PG_OBJECT_SEQUENCE;
+					n->missing_ok = false;
+					$$ = (PGNode *)n;
+				}
+		|	ALTER SEQUENCE IF_P EXISTS qualified_name alter_table_cmds
+				{
+					PGAlterTableStmt *n = makeNode(PGAlterTableStmt);
+					n->relation = $5;
+					n->cmds = $6;
+					n->relkind = PG_OBJECT_SEQUENCE;
+					n->missing_ok = true;
+					$$ = (PGNode *)n;
+				}
+		|	ALTER VIEW qualified_name alter_table_cmds
+				{
+					PGAlterTableStmt *n = makeNode(PGAlterTableStmt);
+					n->relation = $3;
+					n->cmds = $4;
+					n->relkind = PG_OBJECT_VIEW;
+					n->missing_ok = false;
+					$$ = (PGNode *)n;
+				}
+		|	ALTER VIEW IF_P EXISTS qualified_name alter_table_cmds
+				{
+					PGAlterTableStmt *n = makeNode(PGAlterTableStmt);
+					n->relation = $5;
+					n->cmds = $6;
+					n->relkind = PG_OBJECT_VIEW;
+					n->missing_ok = true;
+					$$ = (PGNode *)n;
+				}
+		;
+
+
+alter_identity_column_option_list:
+			alter_identity_column_option
+				{ $$ = list_make1($1); }
+			| alter_identity_column_option_list alter_identity_column_option
+				{ $$ = lappend($1, $2); }
+		;
+
+
+alter_column_default:
+			SET DEFAULT a_expr			{ $$ = $3; }
+			| DROP DEFAULT				{ $$ = NULL; }
+		;
+
+
+alter_identity_column_option:
+			RESTART
+				{
+					$$ = makeDefElem("restart", NULL, @1);
+				}
+			| RESTART opt_with NumericOnly
+				{
+					$$ = makeDefElem("restart", (PGNode *)$3, @1);
+				}
+			| SET SeqOptElem
+				{
+					if (strcmp($2->defname, "as") == 0 ||
+						strcmp($2->defname, "restart") == 0 ||
+						strcmp($2->defname, "owned_by") == 0)
+						ereport(ERROR,
+								(errcode(PG_ERRCODE_SYNTAX_ERROR),
+								 errmsg("sequence option \"%s\" not supported here", $2->defname),
+								 parser_errposition(@2)));
+					$$ = $2;
+				}
+			| SET GENERATED generated_when
+				{
+					$$ = makeDefElem("generated", (PGNode *) makeInteger($3), @1);
+				}
+		;
+
+
+alter_generic_option_list:
+			alter_generic_option_elem
+				{
+					$$ = list_make1($1);
+				}
+			| alter_generic_option_list ',' alter_generic_option_elem
+				{
+					$$ = lappend($1, $3);
+				}
+		;
+
+
+alter_table_cmd:
+			/* ALTER TABLE <name> ADD <coldef> */
+			ADD_P columnDef
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = PG_AT_AddColumn;
+					n->def = $2;
+					n->missing_ok = false;
+					$$ = (PGNode *)n;
+				}
+			/* ALTER TABLE <name> ADD IF NOT EXISTS <coldef> */
+			| ADD_P IF_P NOT EXISTS columnDef
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = PG_AT_AddColumn;
+					n->def = $5;
+					n->missing_ok = true;
+					$$ = (PGNode *)n;
+				}
+			/* ALTER TABLE <name> ADD COLUMN <coldef> */
+			| ADD_P COLUMN columnDef
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = PG_AT_AddColumn;
+					n->def = $3;
+					n->missing_ok = false;
+					$$ = (PGNode *)n;
+				}
+			/* ALTER TABLE <name> ADD COLUMN IF NOT EXISTS <coldef> */
+			| ADD_P COLUMN IF_P NOT EXISTS columnDef
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = PG_AT_AddColumn;
+					n->def = $6;
+					n->missing_ok = true;
+					$$ = (PGNode *)n;
+				}
+			/* ALTER TABLE <name> ALTER [COLUMN] <colname> {SET DEFAULT <expr>|DROP DEFAULT} */
+			| ALTER opt_column ColId alter_column_default
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = PG_AT_ColumnDefault;
+					n->name = $3;
+					n->def = $4;
+					$$ = (PGNode *)n;
+				}
+			/* ALTER TABLE <name> ALTER [COLUMN] <colname> DROP NOT NULL */
+			| ALTER opt_column ColId DROP NOT NULL_P
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = PG_AT_DropNotNull;
+					n->name = $3;
+					$$ = (PGNode *)n;
+				}
+			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET NOT NULL */
+			| ALTER opt_column ColId SET NOT NULL_P
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = PG_AT_SetNotNull;
+					n->name = $3;
+					$$ = (PGNode *)n;
+				}
+			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET STATISTICS <SignedIconst> */
+			| ALTER opt_column ColId SET STATISTICS SignedIconst
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = PG_AT_SetStatistics;
+					n->name = $3;
+					n->def = (PGNode *) makeInteger($6);
+					$$ = (PGNode *)n;
+				}
+			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET ( column_parameter = value [, ... ] ) */
+			| ALTER opt_column ColId SET reloptions
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = PG_AT_SetOptions;
+					n->name = $3;
+					n->def = (PGNode *) $5;
+					$$ = (PGNode *)n;
+				}
+			/* ALTER TABLE <name> ALTER [COLUMN] <colname> RESET ( column_parameter = value [, ... ] ) */
+			| ALTER opt_column ColId RESET reloptions
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = PG_AT_ResetOptions;
+					n->name = $3;
+					n->def = (PGNode *) $5;
+					$$ = (PGNode *)n;
+				}
+			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET STORAGE <storagemode> */
+			| ALTER opt_column ColId SET STORAGE ColId
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = PG_AT_SetStorage;
+					n->name = $3;
+					n->def = (PGNode *) makeString($6);
+					$$ = (PGNode *)n;
+				}
+			/* ALTER TABLE <name> ALTER [COLUMN] <colname> ADD GENERATED ... AS IDENTITY ... */
+			| ALTER opt_column ColId ADD_P GENERATED generated_when AS IDENTITY_P OptParenthesizedSeqOptList
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					PGConstraint *c = makeNode(PGConstraint);
+
+					c->contype = PG_CONSTR_IDENTITY;
+					c->generated_when = $6;
+					c->options = $9;
+					c->location = @5;
+
+					n->subtype = PG_AT_AddIdentity;
+					n->name = $3;
+					n->def = (PGNode *) c;
+
+					$$ = (PGNode *)n;
+				}
+			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET <sequence options>/RESET */
+			| ALTER opt_column ColId alter_identity_column_option_list
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = PG_AT_SetIdentity;
+					n->name = $3;
+					n->def = (PGNode *) $4;
+					$$ = (PGNode *)n;
+				}
+			/* ALTER TABLE <name> ALTER [COLUMN] <colname> DROP IDENTITY */
+			| ALTER opt_column ColId DROP IDENTITY_P
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = AT_DropIdentity;
+					n->name = $3;
+					n->missing_ok = false;
+					$$ = (PGNode *)n;
+				}
+			/* ALTER TABLE <name> ALTER [COLUMN] <colname> DROP IDENTITY IF EXISTS */
+			| ALTER opt_column ColId DROP IDENTITY_P IF_P EXISTS
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = AT_DropIdentity;
+					n->name = $3;
+					n->missing_ok = true;
+					$$ = (PGNode *)n;
+				}
+			/* ALTER TABLE <name> DROP [COLUMN] IF EXISTS <colname> [RESTRICT|CASCADE] */
+			| DROP opt_column IF_P EXISTS ColId opt_drop_behavior
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = PG_AT_DropColumn;
+					n->name = $5;
+					n->behavior = $6;
+					n->missing_ok = true;
+					$$ = (PGNode *)n;
+				}
+			/* ALTER TABLE <name> DROP [COLUMN] <colname> [RESTRICT|CASCADE] */
+			| DROP opt_column ColId opt_drop_behavior
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = PG_AT_DropColumn;
+					n->name = $3;
+					n->behavior = $4;
+					n->missing_ok = false;
+					$$ = (PGNode *)n;
+				}
+			/*
+			 * ALTER TABLE <name> ALTER [COLUMN] <colname> [SET DATA] TYPE <typename>
+			 *		[ USING <expression> ] [RESTRICT|CASCADE]
+			 */
+			| ALTER opt_column ColId opt_set_data TYPE_P opt_Typename opt_collate_clause alter_using
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					PGColumnDef *def = makeNode(PGColumnDef);
+					n->subtype = PG_AT_AlterColumnType;
+					n->name = $3;
+					n->def = (PGNode *) def;
+					/* We only use these fields of the PGColumnDef node */
+					def->typeName = $6;
+					def->collClause = (PGCollateClause *) $7;
+					def->raw_default = $8;
+					def->location = @3;
+					$$ = (PGNode *)n;
+				}
+			/* ALTER FOREIGN TABLE <name> ALTER [COLUMN] <colname> OPTIONS */
+			| ALTER opt_column ColId alter_generic_options
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = PG_AT_AlterColumnGenericOptions;
+					n->name = $3;
+					n->def = (PGNode *) $4;
+					$$ = (PGNode *)n;
+				}
+			/* ALTER TABLE <name> ADD CONSTRAINT ... */
+			| ADD_P TableConstraint
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = PG_AT_AddConstraint;
+					n->def = $2;
+					$$ = (PGNode *)n;
+				}
+			/* ALTER TABLE <name> ALTER CONSTRAINT ... */
+			| ALTER CONSTRAINT name ConstraintAttributeSpec
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					PGConstraint *c = makeNode(PGConstraint);
+					n->subtype = PG_AT_AlterConstraint;
+					n->def = (PGNode *) c;
+					c->contype = PG_CONSTR_FOREIGN; /* others not supported, yet */
+					c->conname = $3;
+					processCASbits($4, @4, "ALTER CONSTRAINT statement",
+									&c->deferrable,
+									&c->initdeferred,
+									NULL, NULL, yyscanner);
+					$$ = (PGNode *)n;
+				}
+			/* ALTER TABLE <name> VALIDATE CONSTRAINT ... */
+			| VALIDATE CONSTRAINT name
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = PG_AT_ValidateConstraint;
+					n->name = $3;
+					$$ = (PGNode *)n;
+				}
+			/* ALTER TABLE <name> DROP CONSTRAINT IF EXISTS <name> [RESTRICT|CASCADE] */
+			| DROP CONSTRAINT IF_P EXISTS name opt_drop_behavior
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = PG_AT_DropConstraint;
+					n->name = $5;
+					n->behavior = $6;
+					n->missing_ok = true;
+					$$ = (PGNode *)n;
+				}
+			/* ALTER TABLE <name> DROP CONSTRAINT <name> [RESTRICT|CASCADE] */
+			| DROP CONSTRAINT name opt_drop_behavior
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = PG_AT_DropConstraint;
+					n->name = $3;
+					n->behavior = $4;
+					n->missing_ok = false;
+					$$ = (PGNode *)n;
+				}
+			/* ALTER TABLE <name> SET LOGGED  */
+			| SET LOGGED
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = PG_AT_SetLogged;
+					$$ = (PGNode *)n;
+				}
+			/* ALTER TABLE <name> SET UNLOGGED  */
+			| SET UNLOGGED
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = PG_AT_SetUnLogged;
+					$$ = (PGNode *)n;
+				}
+			/* ALTER TABLE <name> SET (...) */
+			| SET reloptions
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = PG_AT_SetRelOptions;
+					n->def = (PGNode *)$2;
+					$$ = (PGNode *)n;
+				}
+			/* ALTER TABLE <name> RESET (...) */
+			| RESET reloptions
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = PG_AT_ResetRelOptions;
+					n->def = (PGNode *)$2;
+					$$ = (PGNode *)n;
+				}
+			| alter_generic_options
+				{
+					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
+					n->subtype = PG_AT_GenericOptions;
+					n->def = (PGNode *)$1;
+					$$ = (PGNode *) n;
+				}
+		;
+
+
+alter_using:
+			USING a_expr				{ $$ = $2; }
+			| /* EMPTY */				{ $$ = NULL; }
+		;
+
+
+alter_generic_option_elem:
+			generic_option_elem
+				{
+					$$ = $1;
+				}
+			| SET generic_option_elem
+				{
+					$$ = $2;
+					$$->defaction = PG_DEFELEM_SET;
+				}
+			| ADD_P generic_option_elem
+				{
+					$$ = $2;
+					$$->defaction = PG_DEFELEM_ADD;
+				}
+			| DROP generic_option_name
+				{
+					$$ = makeDefElemExtended(NULL, $2, NULL, DEFELEM_DROP, @2);
+				}
+		;
+
+
+alter_table_cmds:
+			alter_table_cmd							{ $$ = list_make1($1); }
+			| alter_table_cmds ',' alter_table_cmd	{ $$ = lappend($1, $3); }
+		;
+
+
+alter_generic_options:
+			OPTIONS	'(' alter_generic_option_list ')'		{ $$ = $3; }
+		;
+
+
+opt_set_data: SET DATA_P							{ $$ = 1; }
+			| SET									{ $$ = 0; }
+			| /*EMPTY*/								{ $$ = 0; }
+		;
+#line 1 "./grammar/statements/deallocate.y"
+/*****************************************************************************
+ *
+ *		QUERY:
+ *				DEALLOCATE [PREPARE] <plan_name>
+ *
+ *****************************************************************************/
+DeallocateStmt: DEALLOCATE name
+					{
+						PGDeallocateStmt *n = makeNode(PGDeallocateStmt);
+						n->name = $2;
+						$$ = (PGNode *) n;
+					}
+				| DEALLOCATE PREPARE name
+					{
+						PGDeallocateStmt *n = makeNode(PGDeallocateStmt);
+						n->name = $3;
+						$$ = (PGNode *) n;
+					}
+				| DEALLOCATE ALL
+					{
+						PGDeallocateStmt *n = makeNode(PGDeallocateStmt);
+						n->name = NULL;
+						$$ = (PGNode *) n;
+					}
+				| DEALLOCATE PREPARE ALL
+					{
+						PGDeallocateStmt *n = makeNode(PGDeallocateStmt);
+						n->name = NULL;
+						$$ = (PGNode *) n;
+					}
+		;
 #line 1 "./grammar/statements/common.y"
 /*
  * The production for a qualified relation name has to exactly match the
@@ -886,158 +1378,6 @@ ColLabel:	IDENT									{ $$ = $1; }
 			| reserved_keyword						{ $$ = pstrdup($1); }
 		;
 
-#line 1 "./grammar/statements/create_type.y"
-/*****************************************************************************
- *
- * Create Type Statement
- *
- *****************************************************************************/
-CreateTypeStmt:
-				CREATE_P TYPE_P qualified_name AS ENUM_P select_with_parens
-				{
-					PGCreateTypeStmt *n = makeNode(PGCreateTypeStmt);
-					n->typeName = $3;
-					n->kind = PG_NEWTYPE_ENUM;
-					n->query = $6;
-					n->vals = NULL;
-					$$ = (PGNode *)n;
-				}
-				| CREATE_P TYPE_P qualified_name AS ENUM_P '(' opt_enum_val_list ')'
-				{
-					PGCreateTypeStmt *n = makeNode(PGCreateTypeStmt);
-					n->typeName = $3;
-					n->kind = PG_NEWTYPE_ENUM;
-					n->vals = $7;
-					n->query = NULL;
-					$$ = (PGNode *)n;
-				}
-				| CREATE_P TYPE_P qualified_name AS Typename
-				{
-					PGCreateTypeStmt *n = makeNode(PGCreateTypeStmt);
-					n->typeName = $3;
-					n->query = NULL;
-					auto name = std::string(reinterpret_cast<PGValue *>($5->names->tail->data.ptr_value)->val.str);
-					if (name == "enum") {
-						n->kind = PG_NEWTYPE_ENUM;
-						n->vals = $5->typmods;
-					} else {
-						n->kind = PG_NEWTYPE_ALIAS;
-						n->ofType = $5;
-					}
-					$$ = (PGNode *)n;
-				}
-				
-		;
-
-
-
-opt_enum_val_list:
-			enum_val_list { $$ = $1;}
-			|				{$$ = NIL;}
-			;
-
-enum_val_list: Sconst
-				{
-					$$ = list_make1(makeStringConst($1, @1));
-				}
-				| enum_val_list ',' Sconst
-				{
-					$$ = lappend($1, makeStringConst($3, @3));
-				}
-				;
-
-
-
-#line 1 "./grammar/statements/create_schema.y"
-/*****************************************************************************
- *
- * Manipulate a schema
- *
- *****************************************************************************/
-CreateSchemaStmt:
-			CREATE_P SCHEMA qualified_name OptSchemaEltList
-				{
-					PGCreateSchemaStmt *n = makeNode(PGCreateSchemaStmt);
-					if ($3->catalogname) {
-						ereport(ERROR,
-								(errcode(PG_ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("CREATE SCHEMA too many dots: expected \"catalog.schema\" or \"schema\""),
-								 parser_errposition(@3)));
-					}
-					if ($3->schemaname) {
-						n->catalogname = $3->schemaname;
-						n->schemaname = $3->relname;
-					} else {
-						n->schemaname = $3->relname;
-					}
-					n->schemaElts = $4;
-					n->onconflict = PG_ERROR_ON_CONFLICT;
-					$$ = (PGNode *)n;
-				}
-			| CREATE_P SCHEMA IF_P NOT EXISTS qualified_name OptSchemaEltList
-				{
-					PGCreateSchemaStmt *n = makeNode(PGCreateSchemaStmt);
-					if ($6->catalogname) {
-						ereport(ERROR,
-								(errcode(PG_ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("CREATE SCHEMA too many dots: expected \"catalog.schema\" or \"schema\""),
-								 parser_errposition(@6)));
-					}
-					if ($6->schemaname) {
-						n->catalogname = $6->schemaname;
-						n->schemaname = $6->relname;
-					} else {
-						n->schemaname = $6->relname;
-					}
-					if ($7 != NIL)
-						ereport(ERROR,
-								(errcode(PG_ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("CREATE SCHEMA IF NOT EXISTS cannot include schema elements"),
-								 parser_errposition(@7)));
-					n->schemaElts = $7;
-					n->onconflict = PG_IGNORE_ON_CONFLICT;
-					$$ = (PGNode *)n;
-				}
-			| CREATE_P OR REPLACE SCHEMA qualified_name OptSchemaEltList
-				{
-					PGCreateSchemaStmt *n = makeNode(PGCreateSchemaStmt);
-					if ($5->catalogname) {
-						ereport(ERROR,
-								(errcode(PG_ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("CREATE SCHEMA too many dots: expected \"catalog.schema\" or \"schema\""),
-								 parser_errposition(@5)));
-					}
-					if ($5->schemaname) {
-						n->catalogname = $5->schemaname;
-						n->schemaname = $5->relname;
-					} else {
-						n->schemaname = $5->relname;
-					}
-					n->schemaElts = $6;
-					n->onconflict = PG_REPLACE_ON_CONFLICT;
-					$$ = (PGNode *)n;
-				}
-		;
-
-
-OptSchemaEltList:
-			OptSchemaEltList schema_stmt
-				{
-					if (@$ < 0)			/* see comments for YYLLOC_DEFAULT */
-						@$ = @2;
-					$$ = lappend($1, $2);
-				}
-			| /* EMPTY */
-				{ $$ = NIL; }
-		;
-
-
-schema_stmt:
-			CreateStmt
-			| IndexStmt
-			| CreateSeqStmt
-			| ViewStmt
-		;
 #line 1 "./grammar/statements/rename.y"
 /*****************************************************************************
  *
@@ -1180,93 +1520,6 @@ RenameStmt: ALTER SCHEMA name RENAME TO name
 
 opt_column: COLUMN									{ $$ = COLUMN; }
 			| /*EMPTY*/								{ $$ = 0; }
-		;
-#line 1 "./grammar/statements/execute.y"
-/*****************************************************************************
- *
- * EXECUTE <plan_name> [(params, ...)]
- * CREATE TABLE <name> AS EXECUTE <plan_name> [(params, ...)]
- *
- *****************************************************************************/
-ExecuteStmt: EXECUTE name execute_param_clause
-				{
-					PGExecuteStmt *n = makeNode(PGExecuteStmt);
-					n->name = $2;
-					n->params = $3;
-					$$ = (PGNode *) n;
-				}
-			| CREATE_P OptTemp TABLE create_as_target AS
-				EXECUTE name execute_param_clause opt_with_data
-				{
-					PGCreateTableAsStmt *ctas = makeNode(PGCreateTableAsStmt);
-					PGExecuteStmt *n = makeNode(PGExecuteStmt);
-					n->name = $7;
-					n->params = $8;
-					ctas->query = (PGNode *) n;
-					ctas->into = $4;
-					ctas->relkind = PG_OBJECT_TABLE;
-					ctas->is_select_into = false;
-					ctas->onconflict = PG_ERROR_ON_CONFLICT;
-					/* cram additional flags into the PGIntoClause */
-					$4->rel->relpersistence = $2;
-					$4->skipData = !($9);
-					$$ = (PGNode *) ctas;
-				}
-			| CREATE_P OptTemp TABLE IF_P NOT EXISTS create_as_target AS
-				EXECUTE name execute_param_clause opt_with_data
-				{
-					PGCreateTableAsStmt *ctas = makeNode(PGCreateTableAsStmt);
-					PGExecuteStmt *n = makeNode(PGExecuteStmt);
-					n->name = $10;
-					n->params = $11;
-					ctas->query = (PGNode *) n;
-					ctas->into = $7;
-					ctas->relkind = PG_OBJECT_TABLE;
-					ctas->is_select_into = false;
-					ctas->onconflict = PG_IGNORE_ON_CONFLICT;
-					/* cram additional flags into the PGIntoClause */
-					$7->rel->relpersistence = $2;
-					$7->skipData = !($12);
-					$$ = (PGNode *) ctas;
-				}
-		;
-
-
-execute_param_expr:  a_expr
-				{
-					$$ = $1;
-				}
-			| param_name COLON_EQUALS a_expr
-				{
-					PGNamedArgExpr *na = makeNode(PGNamedArgExpr);
-					na->name = $1;
-					na->arg = (PGExpr *) $3;
-					na->argnumber = -1;		/* until determined */
-					na->location = @1;
-					$$ = (PGNode *) na;
-				}
-
-execute_param_list:  execute_param_expr
-				{
-					$$ = list_make1($1);
-				}
-			| execute_param_list ',' execute_param_expr
-				{
-					$$ = lappend($1, $3);
-				}
-		;
-
-execute_param_clause: '(' execute_param_list ')'				{ $$ = $2; }
-					| /* EMPTY */					{ $$ = NIL; }
-					;
-#line 1 "./grammar/statements/use.y"
-UseStmt:
-			USE_P qualified_name
-				{
-					PGUseStmt *n = makeNode(PGUseStmt);
-					n->name = $2;
-					$$ = (PGNode *) n;
-				}
 		;
 #line 1 "./grammar/statements/insert.y"
 /*****************************************************************************
@@ -1560,382 +1813,100 @@ set_target:
 					$$->location = @1;
 				}
 		;
-#line 1 "./grammar/statements/explain.y"
+#line 1 "./grammar/statements/create_type.y"
 /*****************************************************************************
  *
- *		QUERY:
- *				EXPLAIN [ANALYZE] [VERBOSE] query
- *				EXPLAIN ( options ) query
+ * Create Type Statement
  *
  *****************************************************************************/
-ExplainStmt:
-		EXPLAIN ExplainableStmt
+CreateTypeStmt:
+				CREATE_P TYPE_P qualified_name AS ENUM_P select_with_parens
 				{
-					PGExplainStmt *n = makeNode(PGExplainStmt);
-					n->query = $2;
-					n->options = NIL;
-					$$ = (PGNode *) n;
+					PGCreateTypeStmt *n = makeNode(PGCreateTypeStmt);
+					n->typeName = $3;
+					n->kind = PG_NEWTYPE_ENUM;
+					n->query = $6;
+					n->vals = NULL;
+					$$ = (PGNode *)n;
 				}
-		| EXPLAIN analyze_keyword opt_verbose ExplainableStmt
+				| CREATE_P TYPE_P qualified_name AS ENUM_P '(' opt_enum_val_list ')'
 				{
-					PGExplainStmt *n = makeNode(PGExplainStmt);
-					n->query = $4;
-					n->options = list_make1(makeDefElem("analyze", NULL, @2));
-					if ($3)
-						n->options = lappend(n->options,
-											 makeDefElem("verbose", NULL, @3));
-					$$ = (PGNode *) n;
+					PGCreateTypeStmt *n = makeNode(PGCreateTypeStmt);
+					n->typeName = $3;
+					n->kind = PG_NEWTYPE_ENUM;
+					n->vals = $7;
+					n->query = NULL;
+					$$ = (PGNode *)n;
 				}
-		| EXPLAIN VERBOSE ExplainableStmt
+				| CREATE_P TYPE_P qualified_name AS Typename
 				{
-					PGExplainStmt *n = makeNode(PGExplainStmt);
-					n->query = $3;
-					n->options = list_make1(makeDefElem("verbose", NULL, @2));
-					$$ = (PGNode *) n;
+					PGCreateTypeStmt *n = makeNode(PGCreateTypeStmt);
+					n->typeName = $3;
+					n->query = NULL;
+					auto name = std::string(reinterpret_cast<PGValue *>($5->names->tail->data.ptr_value)->val.str);
+					if (name == "enum") {
+						n->kind = PG_NEWTYPE_ENUM;
+						n->vals = $5->typmods;
+					} else {
+						n->kind = PG_NEWTYPE_ALIAS;
+						n->ofType = $5;
+					}
+					$$ = (PGNode *)n;
 				}
-		| EXPLAIN '(' explain_option_list ')' ExplainableStmt
+				
+		;
+
+
+
+opt_enum_val_list:
+			enum_val_list { $$ = $1;}
+			|				{$$ = NIL;}
+			;
+
+enum_val_list: Sconst
 				{
-					PGExplainStmt *n = makeNode(PGExplainStmt);
-					n->query = $5;
-					n->options = $3;
-					$$ = (PGNode *) n;
+					$$ = list_make1(makeStringConst($1, @1));
 				}
-		;
-
-
-opt_verbose:
-			VERBOSE									{ $$ = true; }
-			| /*EMPTY*/								{ $$ = false; }
-		;
-
-
-explain_option_arg:
-			opt_boolean_or_string	{ $$ = (PGNode *) makeString($1); }
-			| NumericOnly			{ $$ = (PGNode *) $1; }
-			| /* EMPTY */			{ $$ = NULL; }
-		;
-
-
-ExplainableStmt:
-			AlterObjectSchemaStmt
-			| AlterSeqStmt
-			| AlterTableStmt
-			| CallStmt
-			| CheckPointStmt
-			| CopyStmt
-			| CreateAsStmt
-			| CreateFunctionStmt
-			| CreateSchemaStmt
-			| CreateSeqStmt
-			| CreateStmt
-			| CreateTypeStmt
-			| DeallocateStmt
-			| DeleteStmt
-			| DropStmt
-			| ExecuteStmt
-			| IndexStmt
-			| InsertStmt
-			| LoadStmt
-			| PragmaStmt
-			| PrepareStmt
-			| RenameStmt
-			| SelectStmt
-			| TransactionStmt
-			| UpdateStmt
-			| UpdateExtensionsStmt
-			| VacuumStmt
-			| VariableResetStmt
-			| VariableSetStmt
-			| VariableShowStmt
-			| ViewStmt
-		;
-
-
-NonReservedWord:	IDENT							{ $$ = $1; }
-			| unreserved_keyword					{ $$ = pstrdup($1); }
-			| other_keyword						{ $$ = pstrdup($1); }
-		;
-
-
-NonReservedWord_or_Sconst:
-			NonReservedWord							{ $$ = $1; }
-			| Sconst								{ $$ = $1; }
-		;
-
-
-explain_option_list:
-			explain_option_elem
+				| enum_val_list ',' Sconst
 				{
-					$$ = list_make1($1);
+					$$ = lappend($1, makeStringConst($3, @3));
 				}
-			| explain_option_list ',' explain_option_elem
-				{
-					$$ = lappend($1, $3);
-				}
-		;
+				;
 
 
-analyze_keyword:
-			ANALYZE									{}
-			| ANALYSE /* British */					{}
-		;
 
-
-opt_boolean_or_string:
-			TRUE_P									{ $$ = (char*) "true"; }
-			| FALSE_P								{ $$ = (char*) "false"; }
-			| ON									{ $$ = (char*) "on"; }
-			/*
-			 * OFF is also accepted as a boolean value, but is handled by
-			 * the NonReservedWord rule.  The action for booleans and strings
-			 * is the same, so we don't need to distinguish them here.
-			 */
-			| NonReservedWord_or_Sconst				{ $$ = $1; }
-		;
-
-
-explain_option_elem:
-			explain_option_name explain_option_arg
-				{
-					$$ = makeDefElem($1, $2, @1);
-				}
-		;
-
-
-explain_option_name:
-			NonReservedWord			{ $$ = $1; }
-			| analyze_keyword		{ $$ = (char*) "analyze"; }
-		;
-#line 1 "./grammar/statements/vacuum.y"
+#line 1 "./grammar/statements/pragma.y"
 /*****************************************************************************
  *
- *		QUERY:
- *				VACUUM
- *				ANALYZE
+ * PRAGMA stmt
  *
  *****************************************************************************/
-VacuumStmt: VACUUM opt_full opt_freeze opt_verbose
+PragmaStmt:
+			PRAGMA_P ColId
 				{
-					PGVacuumStmt *n = makeNode(PGVacuumStmt);
-					n->options = PG_VACOPT_VACUUM;
-					if ($2)
-						n->options |= PG_VACOPT_FULL;
-					if ($3)
-						n->options |= PG_VACOPT_FREEZE;
-					if ($4)
-						n->options |= PG_VACOPT_VERBOSE;
-					n->relation = NULL;
-					n->va_cols = NIL;
-					$$ = (PGNode *)n;
-				}
-			| VACUUM opt_full opt_freeze opt_verbose qualified_name opt_name_list
-				{
-					PGVacuumStmt *n = makeNode(PGVacuumStmt);
-					n->options = PG_VACOPT_VACUUM;
-					if ($2)
-						n->options |= PG_VACOPT_FULL;
-					if ($3)
-						n->options |= PG_VACOPT_FREEZE;
-					if ($4)
-						n->options |= PG_VACOPT_VERBOSE;
-					n->relation = $5;
-					n->va_cols = $6;
-					$$ = (PGNode *)n;
-				}
-			| VACUUM opt_full opt_freeze opt_verbose AnalyzeStmt
-				{
-					PGVacuumStmt *n = (PGVacuumStmt *) $5;
-					n->options |= PG_VACOPT_VACUUM;
-					if ($2)
-						n->options |= PG_VACOPT_FULL;
-					if ($3)
-						n->options |= PG_VACOPT_FREEZE;
-					if ($4)
-						n->options |= PG_VACOPT_VERBOSE;
-					$$ = (PGNode *)n;
-				}
-			| VACUUM '(' vacuum_option_list ')'
-				{
-					PGVacuumStmt *n = makeNode(PGVacuumStmt);
-					n->options = PG_VACOPT_VACUUM | $3;
-					n->relation = NULL;
-					n->va_cols = NIL;
-					$$ = (PGNode *) n;
-				}
-			| VACUUM '(' vacuum_option_list ')' qualified_name opt_name_list
-				{
-					PGVacuumStmt *n = makeNode(PGVacuumStmt);
-					n->options = PG_VACOPT_VACUUM | $3;
-					n->relation = $5;
-					n->va_cols = $6;
-					if (n->va_cols != NIL)	/* implies analyze */
-						n->options |= PG_VACOPT_ANALYZE;
-					$$ = (PGNode *) n;
-				}
-		;
-
-
-vacuum_option_elem:
-			analyze_keyword		{ $$ = PG_VACOPT_ANALYZE; }
-			| VERBOSE			{ $$ = PG_VACOPT_VERBOSE; }
-			| FREEZE			{ $$ = PG_VACOPT_FREEZE; }
-			| FULL				{ $$ = PG_VACOPT_FULL; }
-			| IDENT
-				{
-					if (strcmp($1, "disable_page_skipping") == 0)
-						$$ = PG_VACOPT_DISABLE_PAGE_SKIPPING;
-					else
-						ereport(ERROR,
-								(errcode(PG_ERRCODE_SYNTAX_ERROR),
-							 errmsg("unrecognized VACUUM option \"%s\"", $1),
-									 parser_errposition(@1)));
-				}
-		;
-
-
-opt_full:	FULL									{ $$ = true; }
-			| /*EMPTY*/								{ $$ = false; }
-		;
-
-
-vacuum_option_list:
-			vacuum_option_elem								{ $$ = $1; }
-			| vacuum_option_list ',' vacuum_option_elem		{ $$ = $1 | $3; }
-		;
-
-
-opt_freeze: FREEZE									{ $$ = true; }
-			| /*EMPTY*/								{ $$ = false; }
-		;
-#line 1 "./grammar/statements/checkpoint.y"
-/*
- * Checkpoint statement
- */
-CheckPointStmt:
-			FORCE CHECKPOINT opt_col_id
-				{
-					PGCheckPointStmt *n = makeNode(PGCheckPointStmt);
-					n->force = true;
-					n->name = $3;
-					$$ = (PGNode *)n;
-				}
-			| CHECKPOINT opt_col_id
-				{
-					PGCheckPointStmt *n = makeNode(PGCheckPointStmt);
-					n->force = false;
+					PGPragmaStmt *n = makeNode(PGPragmaStmt);
+					n->kind = PG_PRAGMA_TYPE_NOTHING;
 					n->name = $2;
 					$$ = (PGNode *)n;
 				}
-		;
-
-opt_col_id:
-	ColId 						{ $$ = $1; }
-	| /* empty */ 				{ $$ = NULL; }
-#line 1 "./grammar/statements/call.y"
-/*****************************************************************************
- *
- * CALL <proc_name> [(params, ...)]
- *
- *****************************************************************************/
-CallStmt: CALL_P func_application
+			| PRAGMA_P ColId '=' var_list
 				{
-					PGCallStmt *n = makeNode(PGCallStmt);
-					n->func = $2;
-					$$ = (PGNode *) n;
+					PGPragmaStmt *n = makeNode(PGPragmaStmt);
+					n->kind = PG_PRAGMA_TYPE_ASSIGNMENT;
+					n->name = $2;
+					n->args = $4;
+					$$ = (PGNode *)n;
 				}
-		;
-#line 1 "./grammar/statements/view.y"
-/*****************************************************************************
- *
- *	QUERY:
- *		CREATE [ OR REPLACE ] [ TEMP ] VIEW <viewname> '('target-list ')'
- *			AS <query> [ WITH [ CASCADED | LOCAL ] CHECK OPTION ]
- *
- *****************************************************************************/
-ViewStmt: CREATE_P OptTemp VIEW qualified_name opt_column_list opt_reloptions
-				AS SelectStmt opt_check_option
+			| PRAGMA_P ColId '(' func_arg_list ')'
 				{
-					PGViewStmt *n = makeNode(PGViewStmt);
-					n->view = $4;
-					n->view->relpersistence = $2;
-					n->aliases = $5;
-					n->query = $8;
-					n->onconflict = PG_ERROR_ON_CONFLICT;
-					n->options = $6;
-					n->withCheckOption = $9;
-					$$ = (PGNode *) n;
-				}
-		| CREATE_P OptTemp VIEW IF_P NOT EXISTS qualified_name opt_column_list opt_reloptions
-				AS SelectStmt opt_check_option
-				{
-					PGViewStmt *n = makeNode(PGViewStmt);
-					n->view = $7;
-					n->view->relpersistence = $2;
-					n->aliases = $8;
-					n->query = $11;
-					n->onconflict = PG_IGNORE_ON_CONFLICT;
-					n->options = $9;
-					n->withCheckOption = $12;
-					$$ = (PGNode *) n;
-				}
-		| CREATE_P OR REPLACE OptTemp VIEW qualified_name opt_column_list opt_reloptions
-				AS SelectStmt opt_check_option
-				{
-					PGViewStmt *n = makeNode(PGViewStmt);
-					n->view = $6;
-					n->view->relpersistence = $4;
-					n->aliases = $7;
-					n->query = $10;
-					n->onconflict = PG_REPLACE_ON_CONFLICT;
-					n->options = $8;
-					n->withCheckOption = $11;
-					$$ = (PGNode *) n;
-				}
-		| CREATE_P OptTemp RECURSIVE VIEW qualified_name '(' columnList ')' opt_reloptions
-				AS SelectStmt opt_check_option
-				{
-					PGViewStmt *n = makeNode(PGViewStmt);
-					n->view = $5;
-					n->view->relpersistence = $2;
-					n->aliases = $7;
-					n->query = makeRecursiveViewSelect(n->view->relname, n->aliases, $11);
-					n->onconflict = PG_ERROR_ON_CONFLICT;
-					n->options = $9;
-					n->withCheckOption = $12;
-					if (n->withCheckOption != PG_NO_CHECK_OPTION)
-						ereport(ERROR,
-								(errcode(PG_ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("WITH CHECK OPTION not supported on recursive views"),
-								 parser_errposition(@12)));
-					$$ = (PGNode *) n;
-				}
-		| CREATE_P OR REPLACE OptTemp RECURSIVE VIEW qualified_name '(' columnList ')' opt_reloptions
-				AS SelectStmt opt_check_option
-				{
-					PGViewStmt *n = makeNode(PGViewStmt);
-					n->view = $7;
-					n->view->relpersistence = $4;
-					n->aliases = $9;
-					n->query = makeRecursiveViewSelect(n->view->relname, n->aliases, $13);
-					n->onconflict = PG_REPLACE_ON_CONFLICT;
-					n->options = $11;
-					n->withCheckOption = $14;
-					if (n->withCheckOption != PG_NO_CHECK_OPTION)
-						ereport(ERROR,
-								(errcode(PG_ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("WITH CHECK OPTION not supported on recursive views"),
-								 parser_errposition(@14)));
-					$$ = (PGNode *) n;
+					PGPragmaStmt *n = makeNode(PGPragmaStmt);
+					n->kind = PG_PRAGMA_TYPE_CALL;
+					n->name = $2;
+					n->args = $4;
+					$$ = (PGNode *)n;
 				}
 		;
 
-
-opt_check_option:
-		WITH CHECK_P OPTION				{ $$ = CASCADED_CHECK_OPTION; }
-		| WITH CASCADED CHECK_P OPTION	{ $$ = CASCADED_CHECK_OPTION; }
-		| WITH LOCAL CHECK_P OPTION		{ $$ = PG_LOCAL_CHECK_OPTION; }
-		| /* EMPTY */					{ $$ = PG_NO_CHECK_OPTION; }
-		;
 #line 1 "./grammar/statements/create_sequence.y"
 /*****************************************************************************
  *
@@ -1981,551 +1952,381 @@ CreateSeqStmt:
 OptSeqOptList: SeqOptList							{ $$ = $1; }
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
-#line 1 "./grammar/statements/copy.y"
-CopyStmt:	COPY opt_binary qualified_name opt_column_list opt_oids
-			copy_from opt_program copy_file_name copy_delimiter opt_with copy_options
+#line 1 "./grammar/statements/create_secret.y"
+/*****************************************************************************
+ *
+ * Create a secret
+ *
+ *****************************************************************************/
+CreateSecretStmt:
+			CREATE_P opt_persist SECRET opt_secret_name opt_storage_specifier '(' copy_generic_opt_list ')'
 				{
-					PGCopyStmt *n = makeNode(PGCopyStmt);
-					n->relation = $3;
-					n->query = NULL;
-					n->attlist = $4;
-					n->is_from = $6;
-					n->is_program = $7;
-					n->filename = $8;
-
-					if (n->is_program && n->filename == NULL)
-						ereport(ERROR,
-								(errcode(PG_ERRCODE_SYNTAX_ERROR),
-								 errmsg("STDIN/STDOUT not allowed with PROGRAM"),
-								 parser_errposition(@8)));
-
-					n->options = NIL;
-					/* Concatenate user-supplied flags */
-					if ($2)
-						n->options = lappend(n->options, $2);
-					if ($5)
-						n->options = lappend(n->options, $5);
-					if ($9)
-						n->options = lappend(n->options, $9);
-					if ($11)
-						n->options = list_concat(n->options, $11);
+					PGCreateSecretStmt *n = makeNode(PGCreateSecretStmt);
+					n->persist_type = $2;
+					n->secret_name = $4;
+					n->secret_storage = $5;
+					n->options = $7;
+					n->onconflict = PG_ERROR_ON_CONFLICT;
 					$$ = (PGNode *)n;
 				}
-			| COPY '(' SelectStmt ')' TO opt_program copy_file_name opt_with copy_options
+			| CREATE_P opt_persist SECRET IF_P NOT EXISTS opt_secret_name opt_storage_specifier '(' copy_generic_opt_list ')'
 				{
-					PGCopyStmt *n = makeNode(PGCopyStmt);
-					n->relation = NULL;
-					n->query = $3;
-					n->attlist = NIL;
-					n->is_from = false;
-					n->is_program = $6;
-					n->filename = $7;
+					PGCreateSecretStmt *n = makeNode(PGCreateSecretStmt);
+					n->persist_type = $2;
+					n->secret_name = $7;
+					n->secret_storage = $8;
+					n->options = $10;
+					n->onconflict = PG_IGNORE_ON_CONFLICT;
+					$$ = (PGNode *)n;
+				}
+			| CREATE_P OR REPLACE opt_persist SECRET opt_secret_name opt_storage_specifier '(' copy_generic_opt_list ')'
+				{
+					PGCreateSecretStmt *n = makeNode(PGCreateSecretStmt);
+					n->persist_type = $4;
+					n->secret_name = $6;
+					n->secret_storage = $7;
 					n->options = $9;
+					n->onconflict = PG_REPLACE_ON_CONFLICT;
+					$$ = (PGNode *)n;
+				}
+		;
 
-					if (n->is_program && n->filename == NULL)
-						ereport(ERROR,
-								(errcode(PG_ERRCODE_SYNTAX_ERROR),
-								 errmsg("STDIN/STDOUT not allowed with PROGRAM"),
-								 parser_errposition(@5)));
+opt_secret_name:
+	/* empty */ { $$ = NULL; }
+	| ColId { $$ = $1; }
+	;
+
+opt_persist:
+        /* empty */                                 { $$ = pstrdup("default"); }
+        | TEMPORARY                                 { $$ = pstrdup("temporary"); }
+        | PERSISTENT                                { $$ = pstrdup("persistent"); }
+    ;
+
+opt_storage_specifier:
+        /* empty */                                 { $$ = pstrdup(""); }
+        | IN_P IDENT                                { $$ = $2; }
+    ;
+#line 1 "./grammar/statements/update_extensions.y"
+/*****************************************************************************
+ *
+ *		QUERY:
+ *				PGUpdateExtensionsStmt (UPDATE EXTENSIONS)
+ *
+ *****************************************************************************/
+UpdateExtensionsStmt: opt_with_clause UPDATE EXTENSIONS opt_column_list
+				{
+					PGUpdateExtensionsStmt *n = makeNode(PGUpdateExtensionsStmt);
+					n->extensions = $4;
+
+					if ($1) {
+                          ereport(ERROR,
+                                  (errcode(PG_ERRCODE_SYNTAX_ERROR),
+                                   errmsg("Providing a with clause with an UPDATE EXTENSIONS statement is not allowed"),
+                                   parser_errposition(@1)));
+                          break;
+                    }
 
 					$$ = (PGNode *)n;
 				}
-			|  COPY FROM DATABASE ColId TO ColId copy_database_flag
-    		{
-				PGCopyDatabaseStmt *n = makeNode(PGCopyDatabaseStmt);
-				n->from_database = $4;
-				n->to_database = $6;
-				n->copy_database_flag = $7;
-				$$ = (PGNode *)n;
-			}
 		;
-
-
-copy_database_flag:
-			/* empty */									{ $$ = NULL; }
-			| '(' SCHEMA ')'							{ $$ = "schema"; }
-			| '(' DATA_P ')'							{ $$ = "data"; }
-		;
-
-copy_from:
-			FROM									{ $$ = true; }
-			| TO									{ $$ = false; }
-		;
-
-
-copy_delimiter:
-			opt_using DELIMITERS Sconst
+#line 1 "./grammar/statements/execute.y"
+/*****************************************************************************
+ *
+ * EXECUTE <plan_name> [(params, ...)]
+ * CREATE TABLE <name> AS EXECUTE <plan_name> [(params, ...)]
+ *
+ *****************************************************************************/
+ExecuteStmt: EXECUTE name execute_param_clause
 				{
-					$$ = makeDefElem("delimiter", (PGNode *)makeString($3), @2);
+					PGExecuteStmt *n = makeNode(PGExecuteStmt);
+					n->name = $2;
+					n->params = $3;
+					$$ = (PGNode *) n;
 				}
-			| /*EMPTY*/								{ $$ = NULL; }
+			| CREATE_P OptTemp TABLE create_as_target AS
+				EXECUTE name execute_param_clause opt_with_data
+				{
+					PGCreateTableAsStmt *ctas = makeNode(PGCreateTableAsStmt);
+					PGExecuteStmt *n = makeNode(PGExecuteStmt);
+					n->name = $7;
+					n->params = $8;
+					ctas->query = (PGNode *) n;
+					ctas->into = $4;
+					ctas->relkind = PG_OBJECT_TABLE;
+					ctas->is_select_into = false;
+					ctas->onconflict = PG_ERROR_ON_CONFLICT;
+					/* cram additional flags into the PGIntoClause */
+					$4->rel->relpersistence = $2;
+					$4->skipData = !($9);
+					$$ = (PGNode *) ctas;
+				}
+			| CREATE_P OptTemp TABLE IF_P NOT EXISTS create_as_target AS
+				EXECUTE name execute_param_clause opt_with_data
+				{
+					PGCreateTableAsStmt *ctas = makeNode(PGCreateTableAsStmt);
+					PGExecuteStmt *n = makeNode(PGExecuteStmt);
+					n->name = $10;
+					n->params = $11;
+					ctas->query = (PGNode *) n;
+					ctas->into = $7;
+					ctas->relkind = PG_OBJECT_TABLE;
+					ctas->is_select_into = false;
+					ctas->onconflict = PG_IGNORE_ON_CONFLICT;
+					/* cram additional flags into the PGIntoClause */
+					$7->rel->relpersistence = $2;
+					$7->skipData = !($12);
+					$$ = (PGNode *) ctas;
+				}
 		;
 
 
-copy_generic_opt_arg_list:
-			  copy_generic_opt_arg_list_item
+execute_param_expr:  a_expr
+				{
+					$$ = $1;
+				}
+			| param_name COLON_EQUALS a_expr
+				{
+					PGNamedArgExpr *na = makeNode(PGNamedArgExpr);
+					na->name = $1;
+					na->arg = (PGExpr *) $3;
+					na->argnumber = -1;		/* until determined */
+					na->location = @1;
+					$$ = (PGNode *) na;
+				}
+
+execute_param_list:  execute_param_expr
 				{
 					$$ = list_make1($1);
 				}
-			| copy_generic_opt_arg_list ',' copy_generic_opt_arg_list_item
+			| execute_param_list ',' execute_param_expr
 				{
 					$$ = lappend($1, $3);
 				}
 		;
 
+execute_param_clause: '(' execute_param_list ')'				{ $$ = $2; }
+					| /* EMPTY */					{ $$ = NIL; }
+					;
+#line 1 "./grammar/statements/alter_sequence.y"
+/*****************************************************************************
+ *
+ *		QUERY :
+ *				CREATE SEQUENCE seqname
+ *				ALTER SEQUENCE seqname
+ *
+ *****************************************************************************/
+AlterSeqStmt:
+			ALTER SEQUENCE qualified_name SeqOptList
+				{
+					PGAlterSeqStmt *n = makeNode(PGAlterSeqStmt);
+					n->sequence = $3;
+					n->options = $4;
+					n->missing_ok = false;
+					$$ = (PGNode *)n;
+				}
+			| ALTER SEQUENCE IF_P EXISTS qualified_name SeqOptList
+				{
+					PGAlterSeqStmt *n = makeNode(PGAlterSeqStmt);
+					n->sequence = $5;
+					n->options = $6;
+					n->missing_ok = true;
+					$$ = (PGNode *)n;
+				}
 
-opt_using:
-			USING									{}
+		;
+
+
+SeqOptList: SeqOptElem								{ $$ = list_make1($1); }
+			| SeqOptList SeqOptElem					{ $$ = lappend($1, $2); }
+		;
+
+
+opt_with:	WITH									{}
+			| WITH_LA								{}
 			| /*EMPTY*/								{}
 		;
 
 
-opt_as:		AS										{}
-			| /* EMPTY */							{}
+NumericOnly:
+			FCONST								{ $$ = makeFloat($1); }
+			| '+' FCONST						{ $$ = makeFloat($2); }
+			| '-' FCONST
+				{
+					$$ = makeFloat($2);
+					doNegateFloat($$);
+				}
+			| SignedIconst						{ $$ = makeInteger($1); }
 		;
 
 
-opt_program:
-			PROGRAM									{ $$ = true; }
-			| /* EMPTY */							{ $$ = false; }
-		;
-
-
-copy_options: copy_opt_list							{ $$ = $1; }
-			| '(' copy_generic_opt_list ')'			{ $$ = $2; }
-		;
-
-
-copy_generic_opt_arg:
-			opt_boolean_or_string			{ $$ = (PGNode *) makeString($1); }
-			| NumericOnly					{ $$ = (PGNode *) $1; }
-			| list_expr                     { $$ = (PGNode *) $1; }
-			| '*'							{ $$ = (PGNode *) makeNode(PGAStar); }
-			| '(' copy_generic_opt_arg_list ')'		{ $$ = (PGNode *) $2; }
-			| struct_expr					{ $$ = (PGNode *) $1; }
-			| map_expr					    { $$ = (PGNode *) $1; }
-			| /* EMPTY */					{ $$ = NULL; }
-		;
-
-
-copy_generic_opt_elem:
-			ColLabel copy_generic_opt_arg
+SeqOptElem: AS SimpleTypename
 				{
-					$$ = makeDefElem($1, $2, @1);
+					$$ = makeDefElem("as", (PGNode *)$2, @1);
 				}
-		;
-
-
-opt_oids:
-			WITH OIDS
+			| CACHE NumericOnly
 				{
-					$$ = makeDefElem("oids", (PGNode *)makeInteger(true), @1);
+					$$ = makeDefElem("cache", (PGNode *)$2, @1);
 				}
-			| /*EMPTY*/								{ $$ = NULL; }
-		;
-
-
-copy_opt_list:
-			copy_opt_list copy_opt_item				{ $$ = lappend($1, $2); }
-			| /* EMPTY */							{ $$ = NIL; }
-		;
-
-
-opt_binary:
-			BINARY
+			| CYCLE
 				{
-					$$ = makeDefElem("format", (PGNode *)makeString("binary"), @1);
+					$$ = makeDefElem("cycle", (PGNode *)makeInteger(true), @1);
 				}
-			| /*EMPTY*/								{ $$ = NULL; }
-		;
-
-
-copy_opt_item:
-			BINARY
+			| NO CYCLE
 				{
-					$$ = makeDefElem("format", (PGNode *)makeString("binary"), @1);
+					$$ = makeDefElem("cycle", (PGNode *)makeInteger(false), @1);
 				}
-			| OIDS
+			| INCREMENT opt_by NumericOnly
 				{
-					$$ = makeDefElem("oids", (PGNode *)makeInteger(true), @1);
+					$$ = makeDefElem("increment", (PGNode *)$3, @1);
 				}
-			| FREEZE
+			| MAXVALUE NumericOnly
 				{
-					$$ = makeDefElem("freeze", (PGNode *)makeInteger(true), @1);
+					$$ = makeDefElem("maxvalue", (PGNode *)$2, @1);
 				}
-			| DELIMITER opt_as Sconst
+			| MINVALUE NumericOnly
 				{
-					$$ = makeDefElem("delimiter", (PGNode *)makeString($3), @1);
+					$$ = makeDefElem("minvalue", (PGNode *)$2, @1);
 				}
-			| NULL_P opt_as Sconst
+			| NO MAXVALUE
 				{
-					$$ = makeDefElem("null", (PGNode *)makeString($3), @1);
+					$$ = makeDefElem("maxvalue", NULL, @1);
 				}
-			| CSV
+			| NO MINVALUE
 				{
-					$$ = makeDefElem("format", (PGNode *)makeString("csv"), @1);
+					$$ = makeDefElem("minvalue", NULL, @1);
 				}
-			| HEADER_P
+			| OWNED BY any_name
 				{
-					$$ = makeDefElem("header", (PGNode *)makeInteger(true), @1);
+					$$ = makeDefElem("owned_by", (PGNode *)$3, @1);
 				}
-			| QUOTE opt_as Sconst
+			| SEQUENCE NAME_P any_name
 				{
-					$$ = makeDefElem("quote", (PGNode *)makeString($3), @1);
+					/* not documented, only used by pg_dump */
+					$$ = makeDefElem("sequence_name", (PGNode *)$3, @1);
 				}
-			| ESCAPE opt_as Sconst
+			| START opt_with NumericOnly
 				{
-					$$ = makeDefElem("escape", (PGNode *)makeString($3), @1);
+					$$ = makeDefElem("start", (PGNode *)$3, @1);
 				}
-			| FORCE QUOTE columnList
+			| RESTART
 				{
-					$$ = makeDefElem("force_quote", (PGNode *)$3, @1);
+					$$ = makeDefElem("restart", NULL, @1);
 				}
-			| FORCE QUOTE '*'
+			| RESTART opt_with NumericOnly
 				{
-					$$ = makeDefElem("force_quote", (PGNode *)makeNode(PGAStar), @1);
-				}
-			| PARTITION BY columnList
-				{
-					$$ = makeDefElem("partition_by", (PGNode *)$3, @1);
-				}
-			| PARTITION BY '*'
-				{
-					$$ = makeDefElem("partition_by", (PGNode *)makeNode(PGAStar), @1);
-				}
-			| FORCE NOT NULL_P columnList
-				{
-					$$ = makeDefElem("force_not_null", (PGNode *)$4, @1);
-				}
-			| FORCE NULL_P columnList
-				{
-					$$ = makeDefElem("force_null", (PGNode *)$3, @1);
-				}
-			| ENCODING Sconst
-				{
-					$$ = makeDefElem("encoding", (PGNode *)makeString($2), @1);
+					$$ = makeDefElem("restart", (PGNode *)$3, @1);
 				}
 		;
 
 
-copy_generic_opt_arg_list_item:
-			opt_boolean_or_string	{ $$ = (PGNode *) makeString($1); }
+opt_by:		BY				{}
+			| /* empty */	{}
+	  ;
+
+
+SignedIconst: Iconst								{ $$ = $1; }
+			| '+' Iconst							{ $$ = + $2; }
+			| '-' Iconst							{ $$ = - $2; }
 		;
-
-
-copy_file_name:
-			Sconst									{ $$ = $1; }
-			| STDIN									{ $$ = NULL; }
-			| STDOUT								{ $$ = NULL; }
-			| IDENT '.' ColId						{ $$ = psprintf("%s.%s", $1, $3); }
-			| IDENT									{ $$ = $1; }
-
-		;
-
-
-copy_generic_opt_list:
-			copy_generic_opt_elem
-				{
-					$$ = list_make1($1);
-				}
-			| copy_generic_opt_list ',' copy_generic_opt_elem
-				{
-					$$ = lappend($1, $3);
-				}
-		;
-#line 1 "./grammar/statements/variable_set.y"
+#line 1 "./grammar/statements/drop_secret.y"
 /*****************************************************************************
  *
- * Set PG internal variable
- *	  SET name TO 'var_value'
- * Include SQL syntax (thomas 1997-10-22):
- *	  SET TIME ZONE 'var_value'
+ * Drop a secret
  *
  *****************************************************************************/
-VariableSetStmt:
-			SET set_rest
+DropSecretStmt:
+			DROP opt_persist SECRET ColId opt_storage_drop_specifier
 				{
-					PGVariableSetStmt *n = $2;
-					n->scope = VAR_SET_SCOPE_DEFAULT;
-					$$ = (PGNode *) n;
-				}
-			| SET LOCAL set_rest
-				{
-					PGVariableSetStmt *n = $3;
-					n->scope = VAR_SET_SCOPE_LOCAL;
-					$$ = (PGNode *) n;
-				}
-			| SET SESSION set_rest
-				{
-					PGVariableSetStmt *n = $3;
-					n->scope = VAR_SET_SCOPE_SESSION;
-					$$ = (PGNode *) n;
-				}
-			| SET GLOBAL set_rest
-				{
-					PGVariableSetStmt *n = $3;
-					n->scope = VAR_SET_SCOPE_GLOBAL;
-					$$ = (PGNode *) n;
-				}
-			| SET VARIABLE_P set_rest
-				{
-					PGVariableSetStmt *n = $3;
-					n->scope = VAR_SET_SCOPE_VARIABLE;
-					$$ = (PGNode *) n;
-				}
-		;
-
-
-set_rest:	/* Generic SET syntaxes: */
-			generic_set 						{$$ = $1;}
-			| var_name FROM CURRENT_P
-				{
-					PGVariableSetStmt *n = makeNode(PGVariableSetStmt);
-					n->kind = VAR_SET_CURRENT;
-					n->name = $1;
-					$$ = n;
-				}
-			/* Special syntaxes mandated by SQL standard: */
-			| TIME ZONE zone_value
-				{
-					PGVariableSetStmt *n = makeNode(PGVariableSetStmt);
-					n->kind = VAR_SET_VALUE;
-					n->name = (char*) "timezone";
-					if ($3 != NULL)
-						n->args = list_make1($3);
-					else
-						n->kind = VAR_SET_DEFAULT;
-					$$ = n;
-				}
-			| SCHEMA Sconst
-				{
-					PGVariableSetStmt *n = makeNode(PGVariableSetStmt);
-					n->kind = VAR_SET_VALUE;
-					n->name = (char*) "search_path";
-					n->args = list_make1(makeStringConst($2, @2));
-					$$ = n;
-				}
-		;
-
-
-generic_set:
-			var_name TO var_list
-				{
-					PGVariableSetStmt *n = makeNode(PGVariableSetStmt);
-					n->kind = VAR_SET_VALUE;
-					n->name = $1;
-					n->args = $3;
-					$$ = n;
-				}
-			| var_name '=' var_list
-				{
-					PGVariableSetStmt *n = makeNode(PGVariableSetStmt);
-					n->kind = VAR_SET_VALUE;
-					n->name = $1;
-					n->args = $3;
-					$$ = n;
-				}
-		;
-
-
-var_value:	a_expr
-				{ $$ = $1; }
-		;
-
-
-zone_value:
-			Sconst
-				{
-					$$ = makeStringConst($1, @1);
-				}
-			| IDENT
-				{
-					$$ = makeStringConst($1, @1);
-				}
-			| ConstInterval Sconst opt_interval
-				{
-					PGTypeName *t = $1;
-					if ($3 != NIL)
-					{
-						PGAConst *n = (PGAConst *) linitial($3);
-						if ((n->val.val.ival & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0)
-							ereport(ERROR,
-									(errcode(PG_ERRCODE_SYNTAX_ERROR),
-									 errmsg("time zone interval must be HOUR or HOUR TO MINUTE"),
-									 parser_errposition(@3)));
-					}
-					t->typmods = $3;
-					$$ = makeStringConstCast($2, @2, t);
-				}
-			| ConstInterval '(' Iconst ')' Sconst
-				{
-					PGTypeName *t = $1;
-					t->typmods = list_make2(makeIntConst(INTERVAL_FULL_RANGE, -1),
-											makeIntConst($3, @3));
-					$$ = makeStringConstCast($5, @5, t);
-				}
-			| NumericOnly							{ $$ = makeAConst($1, @1); }
-			| DEFAULT								{ $$ = NULL; }
-			| LOCAL									{ $$ = NULL; }
-		;
-
-
-var_list:	var_value								{ $$ = list_make1($1); }
-			| var_list ',' var_value				{ $$ = lappend($1, $3); }
-		;
-#line 1 "./grammar/statements/delete.y"
-/*****************************************************************************
- *
- *		QUERY:
- *				DELETE STATEMENTS
- *
- *****************************************************************************/
-DeleteStmt: opt_with_clause DELETE_P FROM relation_expr_opt_alias
-			using_clause where_or_current_clause returning_clause
-				{
-					PGDeleteStmt *n = makeNode(PGDeleteStmt);
-					n->relation = $4;
-					n->usingClause = $5;
-					n->whereClause = $6;
-					n->returningList = $7;
-					n->withClause = $1;
+					PGDropSecretStmt *n = makeNode(PGDropSecretStmt);
+					n->persist_type = $2;
+					n->secret_name = $4;
+					n->secret_storage = $5;
+					n->missing_ok  = false;
 					$$ = (PGNode *)n;
 				}
-			| TRUNCATE opt_table relation_expr_opt_alias
-			    {
-					PGDeleteStmt *n = makeNode(PGDeleteStmt);
-					n->relation = $3;
-					n->usingClause = NULL;
-					n->whereClause = NULL;
-					n->returningList = NULL;
-					n->withClause = NULL;
+            | DROP opt_persist SECRET IF_P EXISTS ColId opt_storage_drop_specifier
+                {
+                    PGDropSecretStmt *n = makeNode(PGDropSecretStmt);
+                    n->persist_type = $2;
+                    n->secret_name = $6;
+                    n->secret_storage = $7;
+                    n->missing_ok  = true;
+                    $$ = (PGNode *)n;
+                }
+		;
+
+opt_storage_drop_specifier:
+        /* empty */                                 { $$ = pstrdup(""); }
+        | FROM IDENT                                { $$ = $2; }
+    ;
+#line 1 "./grammar/statements/transaction.y"
+TransactionStmt:
+			ABORT_P opt_transaction
+				{
+					PGTransactionStmt *n = makeNode(PGTransactionStmt);
+					n->kind = PG_TRANS_STMT_ROLLBACK;
+					n->options = NIL;
+					n->transaction_type = PG_TRANS_TYPE_DEFAULT;
 					$$ = (PGNode *)n;
-			    }
-		;
-
-
-relation_expr_opt_alias: relation_expr					%prec UMINUS
-				{
-					$$ = $1;
 				}
-			| relation_expr ColId
+			| BEGIN_P opt_transaction opt_transaction_type
 				{
-					PGAlias *alias = makeNode(PGAlias);
-					alias->aliasname = $2;
-					$1->alias = alias;
-					$$ = $1;
+					PGTransactionStmt *n = makeNode(PGTransactionStmt);
+					n->kind = PG_TRANS_STMT_BEGIN;
+					n->transaction_type = $3;
+					$$ = (PGNode *)n;
 				}
-			| relation_expr AS ColId
+			| START opt_transaction opt_transaction_type
 				{
-					PGAlias *alias = makeNode(PGAlias);
-					alias->aliasname = $3;
-					$1->alias = alias;
-					$$ = $1;
+					PGTransactionStmt *n = makeNode(PGTransactionStmt);
+					n->kind = PG_TRANS_STMT_START;
+					n->transaction_type = $3;
+					$$ = (PGNode *)n;
+				}
+			| COMMIT opt_transaction
+				{
+					PGTransactionStmt *n = makeNode(PGTransactionStmt);
+					n->kind = PG_TRANS_STMT_COMMIT;
+					n->options = NIL;
+					n->transaction_type = PG_TRANS_TYPE_DEFAULT;
+					$$ = (PGNode *)n;
+				}
+			| END_P opt_transaction
+				{
+					PGTransactionStmt *n = makeNode(PGTransactionStmt);
+					n->kind = PG_TRANS_STMT_COMMIT;
+					n->options = NIL;
+					n->transaction_type = PG_TRANS_TYPE_DEFAULT;
+					$$ = (PGNode *)n;
+				}
+			| ROLLBACK opt_transaction
+				{
+					PGTransactionStmt *n = makeNode(PGTransactionStmt);
+					n->kind = PG_TRANS_STMT_ROLLBACK;
+					n->options = NIL;
+					n->transaction_type = PG_TRANS_TYPE_DEFAULT;
+					$$ = (PGNode *)n;
 				}
 		;
 
 
-where_or_current_clause:
-			WHERE a_expr							{ $$ = $2; }
-			| /*EMPTY*/								{ $$ = NULL; }
+opt_transaction:	WORK							{}
+			| TRANSACTION							{}
+			| /*EMPTY*/								{}
 		;
 
-
-
-using_clause:
-				USING from_list_opt_comma						{ $$ = $2; }
-			| /*EMPTY*/								{ $$ = NIL; }
+opt_transaction_type:
+			  READ_P ONLY							{ $$ = PG_TRANS_TYPE_READ_ONLY; }
+			| READ_P WRITE_P						{ $$ = PG_TRANS_TYPE_READ_WRITE; }
+			| /*EMPTY*/								{ $$ = PG_TRANS_TYPE_DEFAULT; }
 		;
-#line 1 "./grammar/statements/prepare.y"
-/*****************************************************************************
- *
- *		QUERY:
- *				PREPARE <plan_name> [(args, ...)] AS <query>
- *
- *****************************************************************************/
-PrepareStmt: PREPARE name prep_type_clause AS PreparableStmt
+#line 1 "./grammar/statements/use.y"
+UseStmt:
+			USE_P qualified_name
 				{
-					PGPrepareStmt *n = makeNode(PGPrepareStmt);
+					PGUseStmt *n = makeNode(PGUseStmt);
 					n->name = $2;
-					n->argtypes = $3;
-					n->query = $5;
 					$$ = (PGNode *) n;
-				}
-		;
-
-
-prep_type_clause: '(' type_list ')'			{ $$ = $2; }
-				| /* EMPTY */				{ $$ = NIL; }
-		;
-
-PreparableStmt:
-			SelectStmt
-			| InsertStmt
-			| UpdateStmt
-			| CopyStmt
-			| DeleteStmt
-			| VariableShowStmt				/* by default all are $$=$1 */
-		;
-#line 1 "./grammar/statements/alter_schema.y"
-/*****************************************************************************
- *
- * ALTER THING name SET SCHEMA name
- *
- *****************************************************************************/
-AlterObjectSchemaStmt:
-			ALTER TABLE relation_expr SET SCHEMA name
-				{
-					PGAlterObjectSchemaStmt *n = makeNode(PGAlterObjectSchemaStmt);
-					n->objectType = PG_OBJECT_TABLE;
-					n->relation = $3;
-					n->newschema = $6;
-					n->missing_ok = false;
-					$$ = (PGNode *)n;
-				}
-			| ALTER TABLE IF_P EXISTS relation_expr SET SCHEMA name
-				{
-					PGAlterObjectSchemaStmt *n = makeNode(PGAlterObjectSchemaStmt);
-					n->objectType = PG_OBJECT_TABLE;
-					n->relation = $5;
-					n->newschema = $8;
-					n->missing_ok = true;
-					$$ = (PGNode *)n;
-				}
-			| ALTER SEQUENCE qualified_name SET SCHEMA name
-				{
-					PGAlterObjectSchemaStmt *n = makeNode(PGAlterObjectSchemaStmt);
-					n->objectType = PG_OBJECT_SEQUENCE;
-					n->relation = $3;
-					n->newschema = $6;
-					n->missing_ok = false;
-					$$ = (PGNode *)n;
-				}
-			| ALTER SEQUENCE IF_P EXISTS qualified_name SET SCHEMA name
-				{
-					PGAlterObjectSchemaStmt *n = makeNode(PGAlterObjectSchemaStmt);
-					n->objectType = PG_OBJECT_SEQUENCE;
-					n->relation = $5;
-					n->newschema = $8;
-					n->missing_ok = true;
-					$$ = (PGNode *)n;
-				}
-			| ALTER VIEW qualified_name SET SCHEMA name
-				{
-					PGAlterObjectSchemaStmt *n = makeNode(PGAlterObjectSchemaStmt);
-					n->objectType = PG_OBJECT_VIEW;
-					n->relation = $3;
-					n->newschema = $6;
-					n->missing_ok = false;
-					$$ = (PGNode *)n;
-				}
-			| ALTER VIEW IF_P EXISTS qualified_name SET SCHEMA name
-				{
-					PGAlterObjectSchemaStmt *n = makeNode(PGAlterObjectSchemaStmt);
-					n->objectType = PG_OBJECT_VIEW;
-					n->relation = $5;
-					n->newschema = $8;
-					n->missing_ok = true;
-					$$ = (PGNode *)n;
 				}
 		;
 #line 1 "./grammar/statements/create.y"
@@ -3272,6 +3073,551 @@ OptTemp:	TEMPORARY					{ $$ = PG_RELPERSISTENCE_TEMP; }
 generated_when:
 			ALWAYS			{ $$ = PG_ATTRIBUTE_IDENTITY_ALWAYS; }
 			| BY DEFAULT	{ $$ = ATTRIBUTE_IDENTITY_BY_DEFAULT; }
+		;
+#line 1 "./grammar/statements/drop.y"
+/*****************************************************************************
+ *
+ *		QUERY:
+ *
+ *		DROP itemtype [ IF EXISTS ] itemname [, itemname ...]
+ *           [ RESTRICT | CASCADE ]
+ *
+ *****************************************************************************/
+DropStmt:	DROP drop_type_any_name IF_P EXISTS any_name_list opt_drop_behavior
+				{
+					PGDropStmt *n = makeNode(PGDropStmt);
+					n->removeType = $2;
+					n->missing_ok = true;
+					n->objects = $5;
+					n->behavior = $6;
+					n->concurrent = false;
+					$$ = (PGNode *)n;
+				}
+			| DROP drop_type_any_name any_name_list opt_drop_behavior
+				{
+					PGDropStmt *n = makeNode(PGDropStmt);
+					n->removeType = $2;
+					n->missing_ok = false;
+					n->objects = $3;
+					n->behavior = $4;
+					n->concurrent = false;
+					$$ = (PGNode *)n;
+				}
+			| DROP drop_type_name IF_P EXISTS name_list opt_drop_behavior
+				{
+					PGDropStmt *n = makeNode(PGDropStmt);
+					n->removeType = $2;
+					n->missing_ok = true;
+					n->objects = $5;
+					n->behavior = $6;
+					n->concurrent = false;
+					$$ = (PGNode *)n;
+				}
+			| DROP drop_type_name name_list opt_drop_behavior
+				{
+					PGDropStmt *n = makeNode(PGDropStmt);
+					n->removeType = $2;
+					n->missing_ok = false;
+					n->objects = $3;
+					n->behavior = $4;
+					n->concurrent = false;
+					$$ = (PGNode *)n;
+				}
+			| DROP drop_type_name_on_any_name name ON any_name opt_drop_behavior
+				{
+					PGDropStmt *n = makeNode(PGDropStmt);
+					n->removeType = $2;
+					n->objects = list_make1(lappend($5, makeString($3)));
+					n->behavior = $6;
+					n->missing_ok = false;
+					n->concurrent = false;
+					$$ = (PGNode *) n;
+				}
+			| DROP drop_type_name_on_any_name IF_P EXISTS name ON any_name opt_drop_behavior
+				{
+					PGDropStmt *n = makeNode(PGDropStmt);
+					n->removeType = $2;
+					n->objects = list_make1(lappend($7, makeString($5)));
+					n->behavior = $8;
+					n->missing_ok = true;
+					n->concurrent = false;
+					$$ = (PGNode *) n;
+				}
+		;
+
+
+drop_type_any_name:
+			TABLE									{ $$ = PG_OBJECT_TABLE; }
+			| SEQUENCE								{ $$ = PG_OBJECT_SEQUENCE; }
+			| FUNCTION								{ $$ = PG_OBJECT_FUNCTION; }
+			| MACRO									{ $$ = PG_OBJECT_FUNCTION; }
+			| MACRO TABLE                           { $$ = PG_OBJECT_TABLE_MACRO; }
+			| VIEW									{ $$ = PG_OBJECT_VIEW; }
+			| MATERIALIZED VIEW						{ $$ = PG_OBJECT_MATVIEW; }
+			| INDEX									{ $$ = PG_OBJECT_INDEX; }
+			| FOREIGN TABLE							{ $$ = PG_OBJECT_FOREIGN_TABLE; }
+			| COLLATION								{ $$ = PG_OBJECT_COLLATION; }
+			| CONVERSION_P							{ $$ = PG_OBJECT_CONVERSION; }
+			| SCHEMA								{ $$ = PG_OBJECT_SCHEMA; }
+			| STATISTICS							{ $$ = PG_OBJECT_STATISTIC_EXT; }
+			| TEXT_P SEARCH PARSER					{ $$ = PG_OBJECT_TSPARSER; }
+			| TEXT_P SEARCH DICTIONARY				{ $$ = PG_OBJECT_TSDICTIONARY; }
+			| TEXT_P SEARCH TEMPLATE				{ $$ = PG_OBJECT_TSTEMPLATE; }
+			| TEXT_P SEARCH CONFIGURATION			{ $$ = PG_OBJECT_TSCONFIGURATION; }
+			| TYPE_P								{ $$ = PG_OBJECT_TYPE; }
+		;
+
+
+drop_type_name:
+			ACCESS METHOD							{ $$ = PG_OBJECT_ACCESS_METHOD; }
+			| EVENT TRIGGER							{ $$ = PG_OBJECT_EVENT_TRIGGER; }
+			| EXTENSION								{ $$ = PG_OBJECT_EXTENSION; }
+			| FOREIGN DATA_P WRAPPER				{ $$ = PG_OBJECT_FDW; }
+			| PUBLICATION							{ $$ = PG_OBJECT_PUBLICATION; }
+			| SERVER								{ $$ = PG_OBJECT_FOREIGN_SERVER; }
+		;
+
+
+any_name_list:
+			any_name								{ $$ = list_make1($1); }
+			| any_name_list ',' any_name			{ $$ = lappend($1, $3); }
+		;
+
+
+opt_drop_behavior:
+			CASCADE						{ $$ = PG_DROP_CASCADE; }
+			| RESTRICT					{ $$ = PG_DROP_RESTRICT; }
+			| /* EMPTY */				{ $$ = PG_DROP_RESTRICT; /* default */ }
+		;
+
+
+drop_type_name_on_any_name:
+			POLICY									{ $$ = PG_OBJECT_POLICY; }
+			| RULE									{ $$ = PG_OBJECT_RULE; }
+			| TRIGGER								{ $$ = PG_OBJECT_TRIGGER; }
+		;
+type_name_list:
+			Typename								{ $$ = list_make1($1); }
+			| type_name_list ',' Typename			{ $$ = lappend($1, $3); }
+			;
+#line 1 "./grammar/statements/create_function.y"
+/*****************************************************************************
+ *
+ * CREATE FUNCTION stmt
+ *
+  *****************************************************************************/
+ CreateFunctionStmt:
+                /* the OptTemp is present but not used - to avoid conflicts with other CREATE_P Stmtatements */
+		CREATE_P OptTemp macro_alias qualified_name table_macro_list
+			{
+				PGCreateFunctionStmt *n = makeNode(PGCreateFunctionStmt);
+				$4->relpersistence = $2;
+				n->name = $4;
+				n->functions = $5;
+				n->onconflict = PG_ERROR_ON_CONFLICT;
+				$$ = (PGNode *)n;
+			}
+ 		|
+ 		CREATE_P OptTemp macro_alias IF_P NOT EXISTS qualified_name table_macro_list
+			{
+				PGCreateFunctionStmt *n = makeNode(PGCreateFunctionStmt);
+				$7->relpersistence = $2;
+				n->name = $7;
+				n->functions = $8;
+				n->onconflict = PG_IGNORE_ON_CONFLICT;
+				$$ = (PGNode *)n;
+
+			}
+		|
+		CREATE_P OR REPLACE OptTemp macro_alias qualified_name table_macro_list
+			{
+				PGCreateFunctionStmt *n = makeNode(PGCreateFunctionStmt);
+				$6->relpersistence = $4;
+				n->name = $6;
+				n->functions = $7;
+				n->onconflict = PG_REPLACE_ON_CONFLICT;
+				$$ = (PGNode *)n;
+			}
+		|
+		CREATE_P OptTemp macro_alias qualified_name macro_definition_list
+             {
+				PGCreateFunctionStmt *n = makeNode(PGCreateFunctionStmt);
+				$4->relpersistence = $2;
+				n->name = $4;
+				n->functions = $5;
+				n->onconflict = PG_ERROR_ON_CONFLICT;
+				$$ = (PGNode *)n;
+             }
+		|
+		CREATE_P OptTemp macro_alias IF_P NOT EXISTS qualified_name macro_definition_list
+			 {
+				PGCreateFunctionStmt *n = makeNode(PGCreateFunctionStmt);
+				$7->relpersistence = $2;
+				n->name = $7;
+				n->functions = $8;
+				n->onconflict = PG_IGNORE_ON_CONFLICT;
+				$$ = (PGNode *)n;
+			 }
+		|
+		CREATE_P OR REPLACE OptTemp macro_alias qualified_name macro_definition_list
+			 {
+				PGCreateFunctionStmt *n = makeNode(PGCreateFunctionStmt);
+				$6->relpersistence = $4;
+				n->name = $6;
+				n->functions = $7;
+				n->onconflict = PG_REPLACE_ON_CONFLICT;
+				$$ = (PGNode *)n;
+			 }
+ 		;
+
+table_macro_definition:
+		param_list AS TABLE select_no_parens
+			{
+				PGFunctionDefinition *n = makeNode(PGFunctionDefinition);
+				n->params = $1;
+				n->query = $4;
+				$$ = (PGNode *)n;
+			}
+	;
+
+table_macro_definition_parens:
+		param_list AS TABLE select_with_parens
+			{
+				PGFunctionDefinition *n = makeNode(PGFunctionDefinition);
+				n->params = $1;
+				n->query = $4;
+				$$ = (PGNode *)n;
+			}
+	;
+
+table_macro_list_internal:
+		table_macro_definition_parens
+			{
+				$$ = list_make1($1);
+			}
+		| table_macro_list_internal ',' table_macro_definition_parens
+			{
+				$$ = lappend($1, $3);
+			}
+	;
+
+table_macro_list:
+		table_macro_definition
+			{
+				$$ = list_make1($1);
+			}
+		| table_macro_list_internal
+	;
+
+macro_definition:
+		param_list AS a_expr
+			{
+				PGFunctionDefinition *n = makeNode(PGFunctionDefinition);
+				n->params = $1;
+				n->function = $3;
+				$$ = (PGNode *)n;
+			}
+	;
+
+macro_definition_list:  macro_definition
+				{
+					$$ = list_make1($1);
+				}
+			| macro_definition_list ',' macro_definition
+				{
+					$$ = lappend($1, $3);
+				}
+		;
+
+macro_alias:
+		FUNCTION
+		| MACRO
+
+
+param_list:
+		'(' ')'
+			{
+				$$ = NIL;
+			}
+		| '(' func_arg_list ')'
+			{
+				$$ = $2;
+			}
+	;
+#line 1 "./grammar/statements/update.y"
+/*****************************************************************************
+ *
+ *		QUERY:
+ *				PGUpdateStmt (UPDATE)
+ *
+ *****************************************************************************/
+UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
+			SET set_clause_list_opt_comma
+			from_clause
+			where_or_current_clause
+			returning_clause
+				{
+					PGUpdateStmt *n = makeNode(PGUpdateStmt);
+					n->relation = $3;
+					n->targetList = $5;
+					n->fromClause = $6;
+					n->whereClause = $7;
+					n->returningList = $8;
+					n->withClause = $1;
+					$$ = (PGNode *)n;
+				}
+		;
+#line 1 "./grammar/statements/copy.y"
+CopyStmt:	COPY opt_binary qualified_name opt_column_list opt_oids
+			copy_from opt_program copy_file_name copy_delimiter opt_with copy_options
+				{
+					PGCopyStmt *n = makeNode(PGCopyStmt);
+					n->relation = $3;
+					n->query = NULL;
+					n->attlist = $4;
+					n->is_from = $6;
+					n->is_program = $7;
+					n->filename = $8;
+
+					if (n->is_program && n->filename == NULL)
+						ereport(ERROR,
+								(errcode(PG_ERRCODE_SYNTAX_ERROR),
+								 errmsg("STDIN/STDOUT not allowed with PROGRAM"),
+								 parser_errposition(@8)));
+
+					n->options = NIL;
+					/* Concatenate user-supplied flags */
+					if ($2)
+						n->options = lappend(n->options, $2);
+					if ($5)
+						n->options = lappend(n->options, $5);
+					if ($9)
+						n->options = lappend(n->options, $9);
+					if ($11)
+						n->options = list_concat(n->options, $11);
+					$$ = (PGNode *)n;
+				}
+			| COPY '(' SelectStmt ')' TO opt_program copy_file_name opt_with copy_options
+				{
+					PGCopyStmt *n = makeNode(PGCopyStmt);
+					n->relation = NULL;
+					n->query = $3;
+					n->attlist = NIL;
+					n->is_from = false;
+					n->is_program = $6;
+					n->filename = $7;
+					n->options = $9;
+
+					if (n->is_program && n->filename == NULL)
+						ereport(ERROR,
+								(errcode(PG_ERRCODE_SYNTAX_ERROR),
+								 errmsg("STDIN/STDOUT not allowed with PROGRAM"),
+								 parser_errposition(@5)));
+
+					$$ = (PGNode *)n;
+				}
+			|  COPY FROM DATABASE ColId TO ColId copy_database_flag
+    		{
+				PGCopyDatabaseStmt *n = makeNode(PGCopyDatabaseStmt);
+				n->from_database = $4;
+				n->to_database = $6;
+				n->copy_database_flag = $7;
+				$$ = (PGNode *)n;
+			}
+		;
+
+
+copy_database_flag:
+			/* empty */									{ $$ = NULL; }
+			| '(' SCHEMA ')'							{ $$ = "schema"; }
+			| '(' DATA_P ')'							{ $$ = "data"; }
+		;
+
+copy_from:
+			FROM									{ $$ = true; }
+			| TO									{ $$ = false; }
+		;
+
+
+copy_delimiter:
+			opt_using DELIMITERS Sconst
+				{
+					$$ = makeDefElem("delimiter", (PGNode *)makeString($3), @2);
+				}
+			| /*EMPTY*/								{ $$ = NULL; }
+		;
+
+
+copy_generic_opt_arg_list:
+			  copy_generic_opt_arg_list_item
+				{
+					$$ = list_make1($1);
+				}
+			| copy_generic_opt_arg_list ',' copy_generic_opt_arg_list_item
+				{
+					$$ = lappend($1, $3);
+				}
+		;
+
+
+opt_using:
+			USING									{}
+			| /*EMPTY*/								{}
+		;
+
+
+opt_as:		AS										{}
+			| /* EMPTY */							{}
+		;
+
+
+opt_program:
+			PROGRAM									{ $$ = true; }
+			| /* EMPTY */							{ $$ = false; }
+		;
+
+
+copy_options: copy_opt_list							{ $$ = $1; }
+			| '(' copy_generic_opt_list ')'			{ $$ = $2; }
+		;
+
+
+copy_generic_opt_arg:
+			opt_boolean_or_string			{ $$ = (PGNode *) makeString($1); }
+			| NumericOnly					{ $$ = (PGNode *) $1; }
+			| list_expr                     { $$ = (PGNode *) $1; }
+			| '*'							{ $$ = (PGNode *) makeNode(PGAStar); }
+			| '(' copy_generic_opt_arg_list ')'		{ $$ = (PGNode *) $2; }
+			| struct_expr					{ $$ = (PGNode *) $1; }
+			| map_expr					    { $$ = (PGNode *) $1; }
+			| /* EMPTY */					{ $$ = NULL; }
+		;
+
+
+copy_generic_opt_elem:
+			ColLabel copy_generic_opt_arg
+				{
+					$$ = makeDefElem($1, $2, @1);
+				}
+		;
+
+
+opt_oids:
+			WITH OIDS
+				{
+					$$ = makeDefElem("oids", (PGNode *)makeInteger(true), @1);
+				}
+			| /*EMPTY*/								{ $$ = NULL; }
+		;
+
+
+copy_opt_list:
+			copy_opt_list copy_opt_item				{ $$ = lappend($1, $2); }
+			| /* EMPTY */							{ $$ = NIL; }
+		;
+
+
+opt_binary:
+			BINARY
+				{
+					$$ = makeDefElem("format", (PGNode *)makeString("binary"), @1);
+				}
+			| /*EMPTY*/								{ $$ = NULL; }
+		;
+
+
+copy_opt_item:
+			BINARY
+				{
+					$$ = makeDefElem("format", (PGNode *)makeString("binary"), @1);
+				}
+			| OIDS
+				{
+					$$ = makeDefElem("oids", (PGNode *)makeInteger(true), @1);
+				}
+			| FREEZE
+				{
+					$$ = makeDefElem("freeze", (PGNode *)makeInteger(true), @1);
+				}
+			| DELIMITER opt_as Sconst
+				{
+					$$ = makeDefElem("delimiter", (PGNode *)makeString($3), @1);
+				}
+			| NULL_P opt_as Sconst
+				{
+					$$ = makeDefElem("null", (PGNode *)makeString($3), @1);
+				}
+			| CSV
+				{
+					$$ = makeDefElem("format", (PGNode *)makeString("csv"), @1);
+				}
+			| HEADER_P
+				{
+					$$ = makeDefElem("header", (PGNode *)makeInteger(true), @1);
+				}
+			| QUOTE opt_as Sconst
+				{
+					$$ = makeDefElem("quote", (PGNode *)makeString($3), @1);
+				}
+			| ESCAPE opt_as Sconst
+				{
+					$$ = makeDefElem("escape", (PGNode *)makeString($3), @1);
+				}
+			| FORCE QUOTE columnList
+				{
+					$$ = makeDefElem("force_quote", (PGNode *)$3, @1);
+				}
+			| FORCE QUOTE '*'
+				{
+					$$ = makeDefElem("force_quote", (PGNode *)makeNode(PGAStar), @1);
+				}
+			| PARTITION BY columnList
+				{
+					$$ = makeDefElem("partition_by", (PGNode *)$3, @1);
+				}
+			| PARTITION BY '*'
+				{
+					$$ = makeDefElem("partition_by", (PGNode *)makeNode(PGAStar), @1);
+				}
+			| FORCE NOT NULL_P columnList
+				{
+					$$ = makeDefElem("force_not_null", (PGNode *)$4, @1);
+				}
+			| FORCE NULL_P columnList
+				{
+					$$ = makeDefElem("force_null", (PGNode *)$3, @1);
+				}
+			| ENCODING Sconst
+				{
+					$$ = makeDefElem("encoding", (PGNode *)makeString($2), @1);
+				}
+		;
+
+
+copy_generic_opt_arg_list_item:
+			opt_boolean_or_string	{ $$ = (PGNode *) makeString($1); }
+		;
+
+
+copy_file_name:
+			Sconst									{ $$ = $1; }
+			| STDIN									{ $$ = NULL; }
+			| STDOUT								{ $$ = NULL; }
+			| IDENT '.' ColId						{ $$ = psprintf("%s.%s", $1, $3); }
+			| IDENT									{ $$ = $1; }
+
+		;
+
+
+copy_generic_opt_list:
+			copy_generic_opt_elem
+				{
+					$$ = list_make1($1);
+				}
+			| copy_generic_opt_list ',' copy_generic_opt_elem
+				{
+					$$ = lappend($1, $3);
+				}
 		;
 #line 1 "./grammar/statements/select.y"
 
@@ -7538,972 +7884,125 @@ param_name:	type_function_name
 ColLabelOrString:	ColLabel						{ $$ = $1; }
 					| SCONST						{ $$ = $1; }
 		;
-#line 1 "./grammar/statements/update_extensions.y"
+#line 1 "./grammar/statements/prepare.y"
 /*****************************************************************************
  *
  *		QUERY:
- *				PGUpdateExtensionsStmt (UPDATE EXTENSIONS)
+ *				PREPARE <plan_name> [(args, ...)] AS <query>
  *
  *****************************************************************************/
-UpdateExtensionsStmt: opt_with_clause UPDATE EXTENSIONS opt_column_list
+PrepareStmt: PREPARE name prep_type_clause AS PreparableStmt
 				{
-					PGUpdateExtensionsStmt *n = makeNode(PGUpdateExtensionsStmt);
-					n->extensions = $4;
-
-					if ($1) {
-                          ereport(ERROR,
-                                  (errcode(PG_ERRCODE_SYNTAX_ERROR),
-                                   errmsg("Providing a with clause with an UPDATE EXTENSIONS statement is not allowed"),
-                                   parser_errposition(@1)));
-                          break;
-                    }
-
-					$$ = (PGNode *)n;
+					PGPrepareStmt *n = makeNode(PGPrepareStmt);
+					n->name = $2;
+					n->argtypes = $3;
+					n->query = $5;
+					$$ = (PGNode *) n;
 				}
 		;
-#line 1 "./grammar/statements/variable_show.y"
-/* allows SET or RESET without LOCAL */
-VariableShowStmt:
-			show_or_describe SelectStmt {
-				PGVariableShowSelectStmt *n = makeNode(PGVariableShowSelectStmt);
-				n->stmt = $2;
-				n->name = (char*) "select";
-				n->is_summary = 0;
-				$$ = (PGNode *) n;
-			}
-		 | SUMMARIZE SelectStmt {
-				PGVariableShowSelectStmt *n = makeNode(PGVariableShowSelectStmt);
-				n->stmt = $2;
-				n->name = (char*) "select";
-				n->is_summary = 1;
-				$$ = (PGNode *) n;
-			}
-		 | SUMMARIZE qualified_name
-			{
-				PGVariableShowStmt *n = makeNode(PGVariableShowStmt);
-				n->relation = $2;
-				n->is_summary = 1;
-				$$ = (PGNode *) n;
-			}
-		 | show_or_describe qualified_name
-			{
-				PGVariableShowStmt *n = makeNode(PGVariableShowStmt);
-				n->relation = $2;
-				n->is_summary = 0;
-				$$ = (PGNode *) n;
-			}
-		| show_or_describe TIME ZONE
-			{
-				PGVariableShowStmt *n = makeNode(PGVariableShowStmt);
-				n->set = (char*) "timezone";
-				n->is_summary = 0;
-				$$ = (PGNode *) n;
-			}
-		| show_or_describe TRANSACTION ISOLATION LEVEL
-			{
-				PGVariableShowStmt *n = makeNode(PGVariableShowStmt);
-				n->set = (char*) "transaction_isolation";
-				n->is_summary = 0;
-				$$ = (PGNode *) n;
-			}
-		| show_or_describe ALL opt_tables
-			{
-				PGVariableShowStmt *n = makeNode(PGVariableShowStmt);
-				n->set = (char*) "__show_tables_expanded";
-				n->is_summary = 0;
-				$$ = (PGNode *) n;
-			}
-		| show_or_describe
-			{
-				PGVariableShowStmt *n = makeNode(PGVariableShowStmt);
-				n->set = (char*) "__show_tables_expanded";
-				n->is_summary = 0;
-				$$ = (PGNode *) n;
-			}
+
+
+prep_type_clause: '(' type_list ')'			{ $$ = $2; }
+				| /* EMPTY */				{ $$ = NIL; }
 		;
 
-describe_or_desc: DESCRIBE | DESC_P
-
-show_or_describe: SHOW | describe_or_desc
-
-opt_tables: TABLES | /* empty */
-
-var_name:	ColId								{ $$ = $1; }
-			| var_name '.' ColId
-				{ $$ = psprintf("%s.%s", $1, $3); }
+PreparableStmt:
+			SelectStmt
+			| InsertStmt
+			| UpdateStmt
+			| CopyStmt
+			| DeleteStmt
+			| VariableShowStmt				/* by default all are $$=$1 */
 		;
-#line 1 "./grammar/statements/create_secret.y"
+#line 1 "./grammar/statements/create_schema.y"
 /*****************************************************************************
  *
- * Create a secret
+ * Manipulate a schema
  *
  *****************************************************************************/
-CreateSecretStmt:
-			CREATE_P opt_persist SECRET opt_secret_name opt_storage_specifier '(' copy_generic_opt_list ')'
+CreateSchemaStmt:
+			CREATE_P SCHEMA qualified_name OptSchemaEltList
 				{
-					PGCreateSecretStmt *n = makeNode(PGCreateSecretStmt);
-					n->persist_type = $2;
-					n->secret_name = $4;
-					n->secret_storage = $5;
-					n->options = $7;
+					PGCreateSchemaStmt *n = makeNode(PGCreateSchemaStmt);
+					if ($3->catalogname) {
+						ereport(ERROR,
+								(errcode(PG_ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("CREATE SCHEMA too many dots: expected \"catalog.schema\" or \"schema\""),
+								 parser_errposition(@3)));
+					}
+					if ($3->schemaname) {
+						n->catalogname = $3->schemaname;
+						n->schemaname = $3->relname;
+					} else {
+						n->schemaname = $3->relname;
+					}
+					n->schemaElts = $4;
 					n->onconflict = PG_ERROR_ON_CONFLICT;
 					$$ = (PGNode *)n;
 				}
-			| CREATE_P opt_persist SECRET IF_P NOT EXISTS opt_secret_name opt_storage_specifier '(' copy_generic_opt_list ')'
+			| CREATE_P SCHEMA IF_P NOT EXISTS qualified_name OptSchemaEltList
 				{
-					PGCreateSecretStmt *n = makeNode(PGCreateSecretStmt);
-					n->persist_type = $2;
-					n->secret_name = $7;
-					n->secret_storage = $8;
-					n->options = $10;
+					PGCreateSchemaStmt *n = makeNode(PGCreateSchemaStmt);
+					if ($6->catalogname) {
+						ereport(ERROR,
+								(errcode(PG_ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("CREATE SCHEMA too many dots: expected \"catalog.schema\" or \"schema\""),
+								 parser_errposition(@6)));
+					}
+					if ($6->schemaname) {
+						n->catalogname = $6->schemaname;
+						n->schemaname = $6->relname;
+					} else {
+						n->schemaname = $6->relname;
+					}
+					if ($7 != NIL)
+						ereport(ERROR,
+								(errcode(PG_ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("CREATE SCHEMA IF NOT EXISTS cannot include schema elements"),
+								 parser_errposition(@7)));
+					n->schemaElts = $7;
 					n->onconflict = PG_IGNORE_ON_CONFLICT;
 					$$ = (PGNode *)n;
 				}
-			| CREATE_P OR REPLACE opt_persist SECRET opt_secret_name opt_storage_specifier '(' copy_generic_opt_list ')'
+			| CREATE_P OR REPLACE SCHEMA qualified_name OptSchemaEltList
 				{
-					PGCreateSecretStmt *n = makeNode(PGCreateSecretStmt);
-					n->persist_type = $4;
-					n->secret_name = $6;
-					n->secret_storage = $7;
-					n->options = $9;
+					PGCreateSchemaStmt *n = makeNode(PGCreateSchemaStmt);
+					if ($5->catalogname) {
+						ereport(ERROR,
+								(errcode(PG_ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("CREATE SCHEMA too many dots: expected \"catalog.schema\" or \"schema\""),
+								 parser_errposition(@5)));
+					}
+					if ($5->schemaname) {
+						n->catalogname = $5->schemaname;
+						n->schemaname = $5->relname;
+					} else {
+						n->schemaname = $5->relname;
+					}
+					n->schemaElts = $6;
 					n->onconflict = PG_REPLACE_ON_CONFLICT;
 					$$ = (PGNode *)n;
 				}
 		;
 
-opt_secret_name:
-	/* empty */ { $$ = NULL; }
-	| ColId { $$ = $1; }
-	;
 
-opt_persist:
-        /* empty */                                 { $$ = pstrdup("default"); }
-        | TEMPORARY                                 { $$ = pstrdup("temporary"); }
-        | PERSISTENT                                { $$ = pstrdup("persistent"); }
-    ;
-
-opt_storage_specifier:
-        /* empty */                                 { $$ = pstrdup(""); }
-        | IN_P IDENT                                { $$ = $2; }
-    ;
-#line 1 "./grammar/statements/load.y"
-/*****************************************************************************
- *
- *		QUERY:
- *				LOAD "filename"
- *
- *****************************************************************************/
-LoadStmt:	LOAD file_name
+OptSchemaEltList:
+			OptSchemaEltList schema_stmt
 				{
-					PGLoadStmt *n = makeNode(PGLoadStmt);
-					n->filename = $2;
-					n->repository = NULL;
-					n->repo_is_alias = false;
-					n->version = NULL;
-					n->load_type = PG_LOAD_TYPE_LOAD;
-					$$ = (PGNode *)n;
-				} |
-				opt_force INSTALL file_name opt_ext_version {
-                    PGLoadStmt *n = makeNode(PGLoadStmt);
-                    n->filename = $3;
-                    n->repository = NULL;
-                    n->repo_is_alias = false;
-                    n->version = $4;
-                    n->load_type = $1;
-                    $$ = (PGNode *)n;
-				} |
-				opt_force INSTALL file_name FROM ColId opt_ext_version {
-                    PGLoadStmt *n = makeNode(PGLoadStmt);
-                    n->repository = $5;
-                    n->repo_is_alias = true;
-                    n->filename = $3;
-                    n->version = $6;
-                    n->load_type = $1;
-                    $$ = (PGNode *)n;
-				} |
-				opt_force INSTALL file_name FROM Sconst opt_ext_version {
-                    PGLoadStmt *n = makeNode(PGLoadStmt);
-                    n->filename = $3;
-                    n->repository = $5;
-                    n->repo_is_alias = false;
-                    n->version = $6;
-                    n->load_type = $1;
-                    $$ = (PGNode *)n;
+					if (@$ < 0)			/* see comments for YYLLOC_DEFAULT */
+						@$ = @2;
+					$$ = lappend($1, $2);
 				}
-		;
-
-opt_force:	/* empty*/							{ $$ = PG_LOAD_TYPE_INSTALL; } |
-            FORCE                               { $$ = PG_LOAD_TYPE_FORCE_INSTALL; };
-
-file_name:	Sconst								{ $$ = $1; } |
-            ColId                               { $$ = $1; };
-
-opt_ext_version:
-               /* empty */                      { $$ = NULL; } |
-                VERSION_P Sconst				{ $$ = $2; } |
-                VERSION_P ColId                 { $$ = $2; };
-#line 1 "./grammar/statements/drop.y"
-/*****************************************************************************
- *
- *		QUERY:
- *
- *		DROP itemtype [ IF EXISTS ] itemname [, itemname ...]
- *           [ RESTRICT | CASCADE ]
- *
- *****************************************************************************/
-DropStmt:	DROP drop_type_any_name IF_P EXISTS any_name_list opt_drop_behavior
-				{
-					PGDropStmt *n = makeNode(PGDropStmt);
-					n->removeType = $2;
-					n->missing_ok = true;
-					n->objects = $5;
-					n->behavior = $6;
-					n->concurrent = false;
-					$$ = (PGNode *)n;
-				}
-			| DROP drop_type_any_name any_name_list opt_drop_behavior
-				{
-					PGDropStmt *n = makeNode(PGDropStmt);
-					n->removeType = $2;
-					n->missing_ok = false;
-					n->objects = $3;
-					n->behavior = $4;
-					n->concurrent = false;
-					$$ = (PGNode *)n;
-				}
-			| DROP drop_type_name IF_P EXISTS name_list opt_drop_behavior
-				{
-					PGDropStmt *n = makeNode(PGDropStmt);
-					n->removeType = $2;
-					n->missing_ok = true;
-					n->objects = $5;
-					n->behavior = $6;
-					n->concurrent = false;
-					$$ = (PGNode *)n;
-				}
-			| DROP drop_type_name name_list opt_drop_behavior
-				{
-					PGDropStmt *n = makeNode(PGDropStmt);
-					n->removeType = $2;
-					n->missing_ok = false;
-					n->objects = $3;
-					n->behavior = $4;
-					n->concurrent = false;
-					$$ = (PGNode *)n;
-				}
-			| DROP drop_type_name_on_any_name name ON any_name opt_drop_behavior
-				{
-					PGDropStmt *n = makeNode(PGDropStmt);
-					n->removeType = $2;
-					n->objects = list_make1(lappend($5, makeString($3)));
-					n->behavior = $6;
-					n->missing_ok = false;
-					n->concurrent = false;
-					$$ = (PGNode *) n;
-				}
-			| DROP drop_type_name_on_any_name IF_P EXISTS name ON any_name opt_drop_behavior
-				{
-					PGDropStmt *n = makeNode(PGDropStmt);
-					n->removeType = $2;
-					n->objects = list_make1(lappend($7, makeString($5)));
-					n->behavior = $8;
-					n->missing_ok = true;
-					n->concurrent = false;
-					$$ = (PGNode *) n;
-				}
+			| /* EMPTY */
+				{ $$ = NIL; }
 		;
 
 
-drop_type_any_name:
-			TABLE									{ $$ = PG_OBJECT_TABLE; }
-			| SEQUENCE								{ $$ = PG_OBJECT_SEQUENCE; }
-			| FUNCTION								{ $$ = PG_OBJECT_FUNCTION; }
-			| MACRO									{ $$ = PG_OBJECT_FUNCTION; }
-			| MACRO TABLE                           { $$ = PG_OBJECT_TABLE_MACRO; }
-			| VIEW									{ $$ = PG_OBJECT_VIEW; }
-			| MATERIALIZED VIEW						{ $$ = PG_OBJECT_MATVIEW; }
-			| INDEX									{ $$ = PG_OBJECT_INDEX; }
-			| FOREIGN TABLE							{ $$ = PG_OBJECT_FOREIGN_TABLE; }
-			| COLLATION								{ $$ = PG_OBJECT_COLLATION; }
-			| CONVERSION_P							{ $$ = PG_OBJECT_CONVERSION; }
-			| SCHEMA								{ $$ = PG_OBJECT_SCHEMA; }
-			| STATISTICS							{ $$ = PG_OBJECT_STATISTIC_EXT; }
-			| TEXT_P SEARCH PARSER					{ $$ = PG_OBJECT_TSPARSER; }
-			| TEXT_P SEARCH DICTIONARY				{ $$ = PG_OBJECT_TSDICTIONARY; }
-			| TEXT_P SEARCH TEMPLATE				{ $$ = PG_OBJECT_TSTEMPLATE; }
-			| TEXT_P SEARCH CONFIGURATION			{ $$ = PG_OBJECT_TSCONFIGURATION; }
-			| TYPE_P								{ $$ = PG_OBJECT_TYPE; }
-		;
-
-
-drop_type_name:
-			ACCESS METHOD							{ $$ = PG_OBJECT_ACCESS_METHOD; }
-			| EVENT TRIGGER							{ $$ = PG_OBJECT_EVENT_TRIGGER; }
-			| EXTENSION								{ $$ = PG_OBJECT_EXTENSION; }
-			| FOREIGN DATA_P WRAPPER				{ $$ = PG_OBJECT_FDW; }
-			| PUBLICATION							{ $$ = PG_OBJECT_PUBLICATION; }
-			| SERVER								{ $$ = PG_OBJECT_FOREIGN_SERVER; }
-		;
-
-
-any_name_list:
-			any_name								{ $$ = list_make1($1); }
-			| any_name_list ',' any_name			{ $$ = lappend($1, $3); }
-		;
-
-
-opt_drop_behavior:
-			CASCADE						{ $$ = PG_DROP_CASCADE; }
-			| RESTRICT					{ $$ = PG_DROP_RESTRICT; }
-			| /* EMPTY */				{ $$ = PG_DROP_RESTRICT; /* default */ }
-		;
-
-
-drop_type_name_on_any_name:
-			POLICY									{ $$ = PG_OBJECT_POLICY; }
-			| RULE									{ $$ = PG_OBJECT_RULE; }
-			| TRIGGER								{ $$ = PG_OBJECT_TRIGGER; }
-		;
-type_name_list:
-			Typename								{ $$ = list_make1($1); }
-			| type_name_list ',' Typename			{ $$ = lappend($1, $3); }
-			;
-#line 1 "./grammar/statements/alter_table.y"
-/*****************************************************************************
- *
- *	ALTER [ TABLE | INDEX | SEQUENCE | VIEW | MATERIALIZED VIEW ] variations
- *
- * Note: we accept all subcommands for each of the five variants, and sort
- * out what's really legal at execution time.
- *****************************************************************************/
-AlterTableStmt:
-			ALTER TABLE relation_expr alter_table_cmds
-				{
-					PGAlterTableStmt *n = makeNode(PGAlterTableStmt);
-					n->relation = $3;
-					n->cmds = $4;
-					n->relkind = PG_OBJECT_TABLE;
-					n->missing_ok = false;
-					$$ = (PGNode *)n;
-				}
-		|	ALTER TABLE IF_P EXISTS relation_expr alter_table_cmds
-				{
-					PGAlterTableStmt *n = makeNode(PGAlterTableStmt);
-					n->relation = $5;
-					n->cmds = $6;
-					n->relkind = PG_OBJECT_TABLE;
-					n->missing_ok = true;
-					$$ = (PGNode *)n;
-				}
-		|	ALTER INDEX qualified_name alter_table_cmds
-				{
-					PGAlterTableStmt *n = makeNode(PGAlterTableStmt);
-					n->relation = $3;
-					n->cmds = $4;
-					n->relkind = PG_OBJECT_INDEX;
-					n->missing_ok = false;
-					$$ = (PGNode *)n;
-				}
-		|	ALTER INDEX IF_P EXISTS qualified_name alter_table_cmds
-				{
-					PGAlterTableStmt *n = makeNode(PGAlterTableStmt);
-					n->relation = $5;
-					n->cmds = $6;
-					n->relkind = PG_OBJECT_INDEX;
-					n->missing_ok = true;
-					$$ = (PGNode *)n;
-				}
-		|	ALTER SEQUENCE qualified_name alter_table_cmds
-				{
-					PGAlterTableStmt *n = makeNode(PGAlterTableStmt);
-					n->relation = $3;
-					n->cmds = $4;
-					n->relkind = PG_OBJECT_SEQUENCE;
-					n->missing_ok = false;
-					$$ = (PGNode *)n;
-				}
-		|	ALTER SEQUENCE IF_P EXISTS qualified_name alter_table_cmds
-				{
-					PGAlterTableStmt *n = makeNode(PGAlterTableStmt);
-					n->relation = $5;
-					n->cmds = $6;
-					n->relkind = PG_OBJECT_SEQUENCE;
-					n->missing_ok = true;
-					$$ = (PGNode *)n;
-				}
-		|	ALTER VIEW qualified_name alter_table_cmds
-				{
-					PGAlterTableStmt *n = makeNode(PGAlterTableStmt);
-					n->relation = $3;
-					n->cmds = $4;
-					n->relkind = PG_OBJECT_VIEW;
-					n->missing_ok = false;
-					$$ = (PGNode *)n;
-				}
-		|	ALTER VIEW IF_P EXISTS qualified_name alter_table_cmds
-				{
-					PGAlterTableStmt *n = makeNode(PGAlterTableStmt);
-					n->relation = $5;
-					n->cmds = $6;
-					n->relkind = PG_OBJECT_VIEW;
-					n->missing_ok = true;
-					$$ = (PGNode *)n;
-				}
-		;
-
-
-alter_identity_column_option_list:
-			alter_identity_column_option
-				{ $$ = list_make1($1); }
-			| alter_identity_column_option_list alter_identity_column_option
-				{ $$ = lappend($1, $2); }
-		;
-
-
-alter_column_default:
-			SET DEFAULT a_expr			{ $$ = $3; }
-			| DROP DEFAULT				{ $$ = NULL; }
-		;
-
-
-alter_identity_column_option:
-			RESTART
-				{
-					$$ = makeDefElem("restart", NULL, @1);
-				}
-			| RESTART opt_with NumericOnly
-				{
-					$$ = makeDefElem("restart", (PGNode *)$3, @1);
-				}
-			| SET SeqOptElem
-				{
-					if (strcmp($2->defname, "as") == 0 ||
-						strcmp($2->defname, "restart") == 0 ||
-						strcmp($2->defname, "owned_by") == 0)
-						ereport(ERROR,
-								(errcode(PG_ERRCODE_SYNTAX_ERROR),
-								 errmsg("sequence option \"%s\" not supported here", $2->defname),
-								 parser_errposition(@2)));
-					$$ = $2;
-				}
-			| SET GENERATED generated_when
-				{
-					$$ = makeDefElem("generated", (PGNode *) makeInteger($3), @1);
-				}
-		;
-
-
-alter_generic_option_list:
-			alter_generic_option_elem
-				{
-					$$ = list_make1($1);
-				}
-			| alter_generic_option_list ',' alter_generic_option_elem
-				{
-					$$ = lappend($1, $3);
-				}
-		;
-
-
-alter_table_cmd:
-			/* ALTER TABLE <name> ADD <coldef> */
-			ADD_P columnDef
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = PG_AT_AddColumn;
-					n->def = $2;
-					n->missing_ok = false;
-					$$ = (PGNode *)n;
-				}
-			/* ALTER TABLE <name> ADD IF NOT EXISTS <coldef> */
-			| ADD_P IF_P NOT EXISTS columnDef
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = PG_AT_AddColumn;
-					n->def = $5;
-					n->missing_ok = true;
-					$$ = (PGNode *)n;
-				}
-			/* ALTER TABLE <name> ADD COLUMN <coldef> */
-			| ADD_P COLUMN columnDef
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = PG_AT_AddColumn;
-					n->def = $3;
-					n->missing_ok = false;
-					$$ = (PGNode *)n;
-				}
-			/* ALTER TABLE <name> ADD COLUMN IF NOT EXISTS <coldef> */
-			| ADD_P COLUMN IF_P NOT EXISTS columnDef
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = PG_AT_AddColumn;
-					n->def = $6;
-					n->missing_ok = true;
-					$$ = (PGNode *)n;
-				}
-			/* ALTER TABLE <name> ALTER [COLUMN] <colname> {SET DEFAULT <expr>|DROP DEFAULT} */
-			| ALTER opt_column ColId alter_column_default
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = PG_AT_ColumnDefault;
-					n->name = $3;
-					n->def = $4;
-					$$ = (PGNode *)n;
-				}
-			/* ALTER TABLE <name> ALTER [COLUMN] <colname> DROP NOT NULL */
-			| ALTER opt_column ColId DROP NOT NULL_P
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = PG_AT_DropNotNull;
-					n->name = $3;
-					$$ = (PGNode *)n;
-				}
-			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET NOT NULL */
-			| ALTER opt_column ColId SET NOT NULL_P
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = PG_AT_SetNotNull;
-					n->name = $3;
-					$$ = (PGNode *)n;
-				}
-			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET STATISTICS <SignedIconst> */
-			| ALTER opt_column ColId SET STATISTICS SignedIconst
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = PG_AT_SetStatistics;
-					n->name = $3;
-					n->def = (PGNode *) makeInteger($6);
-					$$ = (PGNode *)n;
-				}
-			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET ( column_parameter = value [, ... ] ) */
-			| ALTER opt_column ColId SET reloptions
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = PG_AT_SetOptions;
-					n->name = $3;
-					n->def = (PGNode *) $5;
-					$$ = (PGNode *)n;
-				}
-			/* ALTER TABLE <name> ALTER [COLUMN] <colname> RESET ( column_parameter = value [, ... ] ) */
-			| ALTER opt_column ColId RESET reloptions
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = PG_AT_ResetOptions;
-					n->name = $3;
-					n->def = (PGNode *) $5;
-					$$ = (PGNode *)n;
-				}
-			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET STORAGE <storagemode> */
-			| ALTER opt_column ColId SET STORAGE ColId
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = PG_AT_SetStorage;
-					n->name = $3;
-					n->def = (PGNode *) makeString($6);
-					$$ = (PGNode *)n;
-				}
-			/* ALTER TABLE <name> ALTER [COLUMN] <colname> ADD GENERATED ... AS IDENTITY ... */
-			| ALTER opt_column ColId ADD_P GENERATED generated_when AS IDENTITY_P OptParenthesizedSeqOptList
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					PGConstraint *c = makeNode(PGConstraint);
-
-					c->contype = PG_CONSTR_IDENTITY;
-					c->generated_when = $6;
-					c->options = $9;
-					c->location = @5;
-
-					n->subtype = PG_AT_AddIdentity;
-					n->name = $3;
-					n->def = (PGNode *) c;
-
-					$$ = (PGNode *)n;
-				}
-			/* ALTER TABLE <name> ALTER [COLUMN] <colname> SET <sequence options>/RESET */
-			| ALTER opt_column ColId alter_identity_column_option_list
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = PG_AT_SetIdentity;
-					n->name = $3;
-					n->def = (PGNode *) $4;
-					$$ = (PGNode *)n;
-				}
-			/* ALTER TABLE <name> ALTER [COLUMN] <colname> DROP IDENTITY */
-			| ALTER opt_column ColId DROP IDENTITY_P
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = AT_DropIdentity;
-					n->name = $3;
-					n->missing_ok = false;
-					$$ = (PGNode *)n;
-				}
-			/* ALTER TABLE <name> ALTER [COLUMN] <colname> DROP IDENTITY IF EXISTS */
-			| ALTER opt_column ColId DROP IDENTITY_P IF_P EXISTS
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = AT_DropIdentity;
-					n->name = $3;
-					n->missing_ok = true;
-					$$ = (PGNode *)n;
-				}
-			/* ALTER TABLE <name> DROP [COLUMN] IF EXISTS <colname> [RESTRICT|CASCADE] */
-			| DROP opt_column IF_P EXISTS ColId opt_drop_behavior
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = PG_AT_DropColumn;
-					n->name = $5;
-					n->behavior = $6;
-					n->missing_ok = true;
-					$$ = (PGNode *)n;
-				}
-			/* ALTER TABLE <name> DROP [COLUMN] <colname> [RESTRICT|CASCADE] */
-			| DROP opt_column ColId opt_drop_behavior
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = PG_AT_DropColumn;
-					n->name = $3;
-					n->behavior = $4;
-					n->missing_ok = false;
-					$$ = (PGNode *)n;
-				}
-			/*
-			 * ALTER TABLE <name> ALTER [COLUMN] <colname> [SET DATA] TYPE <typename>
-			 *		[ USING <expression> ] [RESTRICT|CASCADE]
-			 */
-			| ALTER opt_column ColId opt_set_data TYPE_P opt_Typename opt_collate_clause alter_using
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					PGColumnDef *def = makeNode(PGColumnDef);
-					n->subtype = PG_AT_AlterColumnType;
-					n->name = $3;
-					n->def = (PGNode *) def;
-					/* We only use these fields of the PGColumnDef node */
-					def->typeName = $6;
-					def->collClause = (PGCollateClause *) $7;
-					def->raw_default = $8;
-					def->location = @3;
-					$$ = (PGNode *)n;
-				}
-			/* ALTER FOREIGN TABLE <name> ALTER [COLUMN] <colname> OPTIONS */
-			| ALTER opt_column ColId alter_generic_options
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = PG_AT_AlterColumnGenericOptions;
-					n->name = $3;
-					n->def = (PGNode *) $4;
-					$$ = (PGNode *)n;
-				}
-			/* ALTER TABLE <name> ADD CONSTRAINT ... */
-			| ADD_P TableConstraint
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = PG_AT_AddConstraint;
-					n->def = $2;
-					$$ = (PGNode *)n;
-				}
-			/* ALTER TABLE <name> ALTER CONSTRAINT ... */
-			| ALTER CONSTRAINT name ConstraintAttributeSpec
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					PGConstraint *c = makeNode(PGConstraint);
-					n->subtype = PG_AT_AlterConstraint;
-					n->def = (PGNode *) c;
-					c->contype = PG_CONSTR_FOREIGN; /* others not supported, yet */
-					c->conname = $3;
-					processCASbits($4, @4, "ALTER CONSTRAINT statement",
-									&c->deferrable,
-									&c->initdeferred,
-									NULL, NULL, yyscanner);
-					$$ = (PGNode *)n;
-				}
-			/* ALTER TABLE <name> VALIDATE CONSTRAINT ... */
-			| VALIDATE CONSTRAINT name
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = PG_AT_ValidateConstraint;
-					n->name = $3;
-					$$ = (PGNode *)n;
-				}
-			/* ALTER TABLE <name> DROP CONSTRAINT IF EXISTS <name> [RESTRICT|CASCADE] */
-			| DROP CONSTRAINT IF_P EXISTS name opt_drop_behavior
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = PG_AT_DropConstraint;
-					n->name = $5;
-					n->behavior = $6;
-					n->missing_ok = true;
-					$$ = (PGNode *)n;
-				}
-			/* ALTER TABLE <name> DROP CONSTRAINT <name> [RESTRICT|CASCADE] */
-			| DROP CONSTRAINT name opt_drop_behavior
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = PG_AT_DropConstraint;
-					n->name = $3;
-					n->behavior = $4;
-					n->missing_ok = false;
-					$$ = (PGNode *)n;
-				}
-			/* ALTER TABLE <name> SET LOGGED  */
-			| SET LOGGED
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = PG_AT_SetLogged;
-					$$ = (PGNode *)n;
-				}
-			/* ALTER TABLE <name> SET UNLOGGED  */
-			| SET UNLOGGED
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = PG_AT_SetUnLogged;
-					$$ = (PGNode *)n;
-				}
-			/* ALTER TABLE <name> SET (...) */
-			| SET reloptions
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = PG_AT_SetRelOptions;
-					n->def = (PGNode *)$2;
-					$$ = (PGNode *)n;
-				}
-			/* ALTER TABLE <name> RESET (...) */
-			| RESET reloptions
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = PG_AT_ResetRelOptions;
-					n->def = (PGNode *)$2;
-					$$ = (PGNode *)n;
-				}
-			| alter_generic_options
-				{
-					PGAlterTableCmd *n = makeNode(PGAlterTableCmd);
-					n->subtype = PG_AT_GenericOptions;
-					n->def = (PGNode *)$1;
-					$$ = (PGNode *) n;
-				}
-		;
-
-
-alter_using:
-			USING a_expr				{ $$ = $2; }
-			| /* EMPTY */				{ $$ = NULL; }
-		;
-
-
-alter_generic_option_elem:
-			generic_option_elem
-				{
-					$$ = $1;
-				}
-			| SET generic_option_elem
-				{
-					$$ = $2;
-					$$->defaction = PG_DEFELEM_SET;
-				}
-			| ADD_P generic_option_elem
-				{
-					$$ = $2;
-					$$->defaction = PG_DEFELEM_ADD;
-				}
-			| DROP generic_option_name
-				{
-					$$ = makeDefElemExtended(NULL, $2, NULL, DEFELEM_DROP, @2);
-				}
-		;
-
-
-alter_table_cmds:
-			alter_table_cmd							{ $$ = list_make1($1); }
-			| alter_table_cmds ',' alter_table_cmd	{ $$ = lappend($1, $3); }
-		;
-
-
-alter_generic_options:
-			OPTIONS	'(' alter_generic_option_list ')'		{ $$ = $3; }
-		;
-
-
-opt_set_data: SET DATA_P							{ $$ = 1; }
-			| SET									{ $$ = 0; }
-			| /*EMPTY*/								{ $$ = 0; }
-		;
-#line 1 "./grammar/statements/comment_on.y"
-/*****************************************************************************
- *
- * Create a Comment
- *
- *****************************************************************************/
-CommentOnStmt:
-			COMMENT ON comment_on_type_any_name qualified_name IS comment_value
-				{
-					PGCommentOnStmt *n = makeNode(PGCommentOnStmt);
-					n->object_type = $3;
-					n->name = $4;
-					n->value = $6;
-					$$ = (PGNode *)n;
-				}
-            | COMMENT ON COLUMN a_expr IS comment_value
-                {
-                    PGCommentOnStmt *n = makeNode(PGCommentOnStmt);
-                    n->object_type = PG_OBJECT_COLUMN;
-                    n->column_expr = $4;
-                    n->value = $6;
-                    $$ = (PGNode *)n;
-                }
-		;
-
-comment_value:
-			Sconst			                { $$ = makeStringConst($1, @1); }
-			| NULL_P					    { $$ = makeNullAConst(@1); }
-
-comment_on_type_any_name:
-			TABLE									{ $$ = PG_OBJECT_TABLE; }
-			| SEQUENCE								{ $$ = PG_OBJECT_SEQUENCE; }
-			| FUNCTION								{ $$ = PG_OBJECT_FUNCTION; }
-			| MACRO									{ $$ = PG_OBJECT_FUNCTION; }
-			| MACRO TABLE                           { $$ = PG_OBJECT_TABLE_MACRO; }
-			| VIEW									{ $$ = PG_OBJECT_VIEW; }
-			| DATABASE								{ $$ = PG_OBJECT_DATABASE; }
-			| INDEX									{ $$ = PG_OBJECT_INDEX; }
-			| SCHEMA								{ $$ = PG_OBJECT_SCHEMA; }
-			| TYPE_P								{ $$ = PG_OBJECT_TYPE; }
-		;
-#line 1 "./grammar/statements/export.y"
-/*****************************************************************************
- *
- * EXPORT/IMPORT stmt
- *
- *****************************************************************************/
-ExportStmt:
-			EXPORT_P DATABASE Sconst copy_options
-				{
-					PGExportStmt *n = makeNode(PGExportStmt);
-					n->database = NULL;
-					n->filename = $3;
-					n->options = NIL;
-					if ($4) {
-						n->options = list_concat(n->options, $4);
-					}
-					$$ = (PGNode *)n;
-				}
-			|
-			EXPORT_P DATABASE ColId TO Sconst copy_options
-				{
-					PGExportStmt *n = makeNode(PGExportStmt);
-					n->database = $3;
-					n->filename = $5;
-					n->options = NIL;
-					if ($6) {
-						n->options = list_concat(n->options, $6);
-					}
-					$$ = (PGNode *)n;
-				}
-		;
-
-ImportStmt:
-			IMPORT_P DATABASE Sconst
-				{
-					PGImportStmt *n = makeNode(PGImportStmt);
-					n->filename = $3;
-					$$ = (PGNode *)n;
-				}
-		;
-#line 1 "./grammar/statements/variable_reset.y"
-VariableResetStmt:
-			RESET reset_rest
-			{
-				$2->scope = VAR_SET_SCOPE_DEFAULT;
-				$$ = (PGNode *) $2;
-			}
-			| RESET LOCAL reset_rest
-				{
-					$3->scope = VAR_SET_SCOPE_LOCAL;
-					$$ = (PGNode *) $3;
-				}
-			| RESET SESSION reset_rest
-				{
-					$3->scope = VAR_SET_SCOPE_SESSION;
-					$$ = (PGNode *) $3;
-				}
-			| RESET GLOBAL reset_rest
-				{
-					$3->scope = VAR_SET_SCOPE_GLOBAL;
-					$$ = (PGNode *) $3;
-				}
-			| RESET VARIABLE_P reset_rest
-				{
-					$3->scope = VAR_SET_SCOPE_VARIABLE;
-					$$ = (PGNode *) $3;
-				}
-		;
-
-
-generic_reset:
-			var_name
-				{
-					PGVariableSetStmt *n = makeNode(PGVariableSetStmt);
-					n->kind = VAR_RESET;
-					n->name = $1;
-					$$ = n;
-				}
-			| ALL
-				{
-					PGVariableSetStmt *n = makeNode(PGVariableSetStmt);
-					n->kind = VAR_RESET_ALL;
-					$$ = n;
-				}
-		;
-
-
-reset_rest:
-			generic_reset							{ $$ = $1; }
-			| TIME ZONE
-				{
-					PGVariableSetStmt *n = makeNode(PGVariableSetStmt);
-					n->kind = VAR_RESET;
-					n->name = (char*) "timezone";
-					$$ = n;
-				}
-			| TRANSACTION ISOLATION LEVEL
-				{
-					PGVariableSetStmt *n = makeNode(PGVariableSetStmt);
-					n->kind = VAR_RESET;
-					n->name = (char*) "transaction_isolation";
-					$$ = n;
-				}
-		;
-#line 1 "./grammar/statements/deallocate.y"
-/*****************************************************************************
- *
- *		QUERY:
- *				DEALLOCATE [PREPARE] <plan_name>
- *
- *****************************************************************************/
-DeallocateStmt: DEALLOCATE name
-					{
-						PGDeallocateStmt *n = makeNode(PGDeallocateStmt);
-						n->name = $2;
-						$$ = (PGNode *) n;
-					}
-				| DEALLOCATE PREPARE name
-					{
-						PGDeallocateStmt *n = makeNode(PGDeallocateStmt);
-						n->name = $3;
-						$$ = (PGNode *) n;
-					}
-				| DEALLOCATE ALL
-					{
-						PGDeallocateStmt *n = makeNode(PGDeallocateStmt);
-						n->name = NULL;
-						$$ = (PGNode *) n;
-					}
-				| DEALLOCATE PREPARE ALL
-					{
-						PGDeallocateStmt *n = makeNode(PGDeallocateStmt);
-						n->name = NULL;
-						$$ = (PGNode *) n;
-					}
+schema_stmt:
+			CreateStmt
+			| IndexStmt
+			| CreateSeqStmt
+			| ViewStmt
 		;
 #line 1 "./grammar/statements/index.y"
 /*****************************************************************************
@@ -8597,6 +8096,709 @@ opt_unique:
 			UNIQUE									{ $$ = true; }
 			| /*EMPTY*/								{ $$ = false; }
 		;
+#line 1 "./grammar/statements/alter_schema.y"
+/*****************************************************************************
+ *
+ * ALTER THING name SET SCHEMA name
+ *
+ *****************************************************************************/
+AlterObjectSchemaStmt:
+			ALTER TABLE relation_expr SET SCHEMA name
+				{
+					PGAlterObjectSchemaStmt *n = makeNode(PGAlterObjectSchemaStmt);
+					n->objectType = PG_OBJECT_TABLE;
+					n->relation = $3;
+					n->newschema = $6;
+					n->missing_ok = false;
+					$$ = (PGNode *)n;
+				}
+			| ALTER TABLE IF_P EXISTS relation_expr SET SCHEMA name
+				{
+					PGAlterObjectSchemaStmt *n = makeNode(PGAlterObjectSchemaStmt);
+					n->objectType = PG_OBJECT_TABLE;
+					n->relation = $5;
+					n->newschema = $8;
+					n->missing_ok = true;
+					$$ = (PGNode *)n;
+				}
+			| ALTER SEQUENCE qualified_name SET SCHEMA name
+				{
+					PGAlterObjectSchemaStmt *n = makeNode(PGAlterObjectSchemaStmt);
+					n->objectType = PG_OBJECT_SEQUENCE;
+					n->relation = $3;
+					n->newschema = $6;
+					n->missing_ok = false;
+					$$ = (PGNode *)n;
+				}
+			| ALTER SEQUENCE IF_P EXISTS qualified_name SET SCHEMA name
+				{
+					PGAlterObjectSchemaStmt *n = makeNode(PGAlterObjectSchemaStmt);
+					n->objectType = PG_OBJECT_SEQUENCE;
+					n->relation = $5;
+					n->newschema = $8;
+					n->missing_ok = true;
+					$$ = (PGNode *)n;
+				}
+			| ALTER VIEW qualified_name SET SCHEMA name
+				{
+					PGAlterObjectSchemaStmt *n = makeNode(PGAlterObjectSchemaStmt);
+					n->objectType = PG_OBJECT_VIEW;
+					n->relation = $3;
+					n->newschema = $6;
+					n->missing_ok = false;
+					$$ = (PGNode *)n;
+				}
+			| ALTER VIEW IF_P EXISTS qualified_name SET SCHEMA name
+				{
+					PGAlterObjectSchemaStmt *n = makeNode(PGAlterObjectSchemaStmt);
+					n->objectType = PG_OBJECT_VIEW;
+					n->relation = $5;
+					n->newschema = $8;
+					n->missing_ok = true;
+					$$ = (PGNode *)n;
+				}
+		;
+#line 1 "./grammar/statements/checkpoint.y"
+/*
+ * Checkpoint statement
+ */
+CheckPointStmt:
+			FORCE CHECKPOINT opt_col_id
+				{
+					PGCheckPointStmt *n = makeNode(PGCheckPointStmt);
+					n->force = true;
+					n->name = $3;
+					$$ = (PGNode *)n;
+				}
+			| CHECKPOINT opt_col_id
+				{
+					PGCheckPointStmt *n = makeNode(PGCheckPointStmt);
+					n->force = false;
+					n->name = $2;
+					$$ = (PGNode *)n;
+				}
+		;
+
+opt_col_id:
+	ColId 						{ $$ = $1; }
+	| /* empty */ 				{ $$ = NULL; }
+#line 1 "./grammar/statements/comment_on.y"
+/*****************************************************************************
+ *
+ * Create a Comment
+ *
+ *****************************************************************************/
+CommentOnStmt:
+			COMMENT ON comment_on_type_any_name qualified_name IS comment_value
+				{
+					PGCommentOnStmt *n = makeNode(PGCommentOnStmt);
+					n->object_type = $3;
+					n->name = $4;
+					n->value = $6;
+					$$ = (PGNode *)n;
+				}
+            | COMMENT ON COLUMN a_expr IS comment_value
+                {
+                    PGCommentOnStmt *n = makeNode(PGCommentOnStmt);
+                    n->object_type = PG_OBJECT_COLUMN;
+                    n->column_expr = $4;
+                    n->value = $6;
+                    $$ = (PGNode *)n;
+                }
+		;
+
+comment_value:
+			Sconst			                { $$ = makeStringConst($1, @1); }
+			| NULL_P					    { $$ = makeNullAConst(@1); }
+
+comment_on_type_any_name:
+			TABLE									{ $$ = PG_OBJECT_TABLE; }
+			| SEQUENCE								{ $$ = PG_OBJECT_SEQUENCE; }
+			| FUNCTION								{ $$ = PG_OBJECT_FUNCTION; }
+			| MACRO									{ $$ = PG_OBJECT_FUNCTION; }
+			| MACRO TABLE                           { $$ = PG_OBJECT_TABLE_MACRO; }
+			| VIEW									{ $$ = PG_OBJECT_VIEW; }
+			| DATABASE								{ $$ = PG_OBJECT_DATABASE; }
+			| INDEX									{ $$ = PG_OBJECT_INDEX; }
+			| SCHEMA								{ $$ = PG_OBJECT_SCHEMA; }
+			| TYPE_P								{ $$ = PG_OBJECT_TYPE; }
+		;
+#line 1 "./grammar/statements/export.y"
+/*****************************************************************************
+ *
+ * EXPORT/IMPORT stmt
+ *
+ *****************************************************************************/
+ExportStmt:
+			EXPORT_P DATABASE Sconst copy_options
+				{
+					PGExportStmt *n = makeNode(PGExportStmt);
+					n->database = NULL;
+					n->filename = $3;
+					n->options = NIL;
+					if ($4) {
+						n->options = list_concat(n->options, $4);
+					}
+					$$ = (PGNode *)n;
+				}
+			|
+			EXPORT_P DATABASE ColId TO Sconst copy_options
+				{
+					PGExportStmt *n = makeNode(PGExportStmt);
+					n->database = $3;
+					n->filename = $5;
+					n->options = NIL;
+					if ($6) {
+						n->options = list_concat(n->options, $6);
+					}
+					$$ = (PGNode *)n;
+				}
+		;
+
+ImportStmt:
+			IMPORT_P DATABASE Sconst
+				{
+					PGImportStmt *n = makeNode(PGImportStmt);
+					n->filename = $3;
+					$$ = (PGNode *)n;
+				}
+		;
+#line 1 "./grammar/statements/explain.y"
+/*****************************************************************************
+ *
+ *		QUERY:
+ *				EXPLAIN [ANALYZE] [VERBOSE] query
+ *				EXPLAIN ( options ) query
+ *
+ *****************************************************************************/
+ExplainStmt:
+		EXPLAIN ExplainableStmt
+				{
+					PGExplainStmt *n = makeNode(PGExplainStmt);
+					n->query = $2;
+					n->options = NIL;
+					$$ = (PGNode *) n;
+				}
+		| EXPLAIN analyze_keyword opt_verbose ExplainableStmt
+				{
+					PGExplainStmt *n = makeNode(PGExplainStmt);
+					n->query = $4;
+					n->options = list_make1(makeDefElem("analyze", NULL, @2));
+					if ($3)
+						n->options = lappend(n->options,
+											 makeDefElem("verbose", NULL, @3));
+					$$ = (PGNode *) n;
+				}
+		| EXPLAIN VERBOSE ExplainableStmt
+				{
+					PGExplainStmt *n = makeNode(PGExplainStmt);
+					n->query = $3;
+					n->options = list_make1(makeDefElem("verbose", NULL, @2));
+					$$ = (PGNode *) n;
+				}
+		| EXPLAIN '(' explain_option_list ')' ExplainableStmt
+				{
+					PGExplainStmt *n = makeNode(PGExplainStmt);
+					n->query = $5;
+					n->options = $3;
+					$$ = (PGNode *) n;
+				}
+		;
+
+
+opt_verbose:
+			VERBOSE									{ $$ = true; }
+			| /*EMPTY*/								{ $$ = false; }
+		;
+
+
+explain_option_arg:
+			opt_boolean_or_string	{ $$ = (PGNode *) makeString($1); }
+			| NumericOnly			{ $$ = (PGNode *) $1; }
+			| /* EMPTY */			{ $$ = NULL; }
+		;
+
+
+ExplainableStmt:
+			AlterObjectSchemaStmt
+			| AlterSeqStmt
+			| AlterTableStmt
+			| CallStmt
+			| CheckPointStmt
+			| CopyStmt
+			| CreateAsStmt
+			| CreateFunctionStmt
+			| CreateSchemaStmt
+			| CreateSeqStmt
+			| CreateStmt
+			| CreateTypeStmt
+			| DeallocateStmt
+			| DeleteStmt
+			| DropStmt
+			| ExecuteStmt
+			| IndexStmt
+			| InsertStmt
+			| LoadStmt
+			| PragmaStmt
+			| PrepareStmt
+			| RenameStmt
+			| SelectStmt
+			| TransactionStmt
+			| UpdateStmt
+			| UpdateExtensionsStmt
+			| VacuumStmt
+			| VariableResetStmt
+			| VariableSetStmt
+			| VariableShowStmt
+			| ViewStmt
+		;
+
+
+NonReservedWord:	IDENT							{ $$ = $1; }
+			| unreserved_keyword					{ $$ = pstrdup($1); }
+			| other_keyword						{ $$ = pstrdup($1); }
+		;
+
+
+NonReservedWord_or_Sconst:
+			NonReservedWord							{ $$ = $1; }
+			| Sconst								{ $$ = $1; }
+		;
+
+
+explain_option_list:
+			explain_option_elem
+				{
+					$$ = list_make1($1);
+				}
+			| explain_option_list ',' explain_option_elem
+				{
+					$$ = lappend($1, $3);
+				}
+		;
+
+
+analyze_keyword:
+			ANALYZE									{}
+			| ANALYSE /* British */					{}
+		;
+
+
+opt_boolean_or_string:
+			TRUE_P									{ $$ = (char*) "true"; }
+			| FALSE_P								{ $$ = (char*) "false"; }
+			| ON									{ $$ = (char*) "on"; }
+			/*
+			 * OFF is also accepted as a boolean value, but is handled by
+			 * the NonReservedWord rule.  The action for booleans and strings
+			 * is the same, so we don't need to distinguish them here.
+			 */
+			| NonReservedWord_or_Sconst				{ $$ = $1; }
+		;
+
+
+explain_option_elem:
+			explain_option_name explain_option_arg
+				{
+					$$ = makeDefElem($1, $2, @1);
+				}
+		;
+
+
+explain_option_name:
+			NonReservedWord			{ $$ = $1; }
+			| analyze_keyword		{ $$ = (char*) "analyze"; }
+		;
+#line 1 "./grammar/statements/variable_set.y"
+/*****************************************************************************
+ *
+ * Set PG internal variable
+ *	  SET name TO 'var_value'
+ * Include SQL syntax (thomas 1997-10-22):
+ *	  SET TIME ZONE 'var_value'
+ *
+ *****************************************************************************/
+VariableSetStmt:
+			SET set_rest
+				{
+					PGVariableSetStmt *n = $2;
+					n->scope = VAR_SET_SCOPE_DEFAULT;
+					$$ = (PGNode *) n;
+				}
+			| SET LOCAL set_rest
+				{
+					PGVariableSetStmt *n = $3;
+					n->scope = VAR_SET_SCOPE_LOCAL;
+					$$ = (PGNode *) n;
+				}
+			| SET SESSION set_rest
+				{
+					PGVariableSetStmt *n = $3;
+					n->scope = VAR_SET_SCOPE_SESSION;
+					$$ = (PGNode *) n;
+				}
+			| SET GLOBAL set_rest
+				{
+					PGVariableSetStmt *n = $3;
+					n->scope = VAR_SET_SCOPE_GLOBAL;
+					$$ = (PGNode *) n;
+				}
+			| SET VARIABLE_P set_rest
+				{
+					PGVariableSetStmt *n = $3;
+					n->scope = VAR_SET_SCOPE_VARIABLE;
+					$$ = (PGNode *) n;
+				}
+		;
+
+
+set_rest:	/* Generic SET syntaxes: */
+			generic_set 						{$$ = $1;}
+			| var_name FROM CURRENT_P
+				{
+					PGVariableSetStmt *n = makeNode(PGVariableSetStmt);
+					n->kind = VAR_SET_CURRENT;
+					n->name = $1;
+					$$ = n;
+				}
+			/* Special syntaxes mandated by SQL standard: */
+			| TIME ZONE zone_value
+				{
+					PGVariableSetStmt *n = makeNode(PGVariableSetStmt);
+					n->kind = VAR_SET_VALUE;
+					n->name = (char*) "timezone";
+					if ($3 != NULL)
+						n->args = list_make1($3);
+					else
+						n->kind = VAR_SET_DEFAULT;
+					$$ = n;
+				}
+			| SCHEMA Sconst
+				{
+					PGVariableSetStmt *n = makeNode(PGVariableSetStmt);
+					n->kind = VAR_SET_VALUE;
+					n->name = (char*) "search_path";
+					n->args = list_make1(makeStringConst($2, @2));
+					$$ = n;
+				}
+		;
+
+
+generic_set:
+			var_name TO var_list
+				{
+					PGVariableSetStmt *n = makeNode(PGVariableSetStmt);
+					n->kind = VAR_SET_VALUE;
+					n->name = $1;
+					n->args = $3;
+					$$ = n;
+				}
+			| var_name '=' var_list
+				{
+					PGVariableSetStmt *n = makeNode(PGVariableSetStmt);
+					n->kind = VAR_SET_VALUE;
+					n->name = $1;
+					n->args = $3;
+					$$ = n;
+				}
+		;
+
+
+var_value:	a_expr
+				{ $$ = $1; }
+		;
+
+
+zone_value:
+			Sconst
+				{
+					$$ = makeStringConst($1, @1);
+				}
+			| IDENT
+				{
+					$$ = makeStringConst($1, @1);
+				}
+			| ConstInterval Sconst opt_interval
+				{
+					PGTypeName *t = $1;
+					if ($3 != NIL)
+					{
+						PGAConst *n = (PGAConst *) linitial($3);
+						if ((n->val.val.ival & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0)
+							ereport(ERROR,
+									(errcode(PG_ERRCODE_SYNTAX_ERROR),
+									 errmsg("time zone interval must be HOUR or HOUR TO MINUTE"),
+									 parser_errposition(@3)));
+					}
+					t->typmods = $3;
+					$$ = makeStringConstCast($2, @2, t);
+				}
+			| ConstInterval '(' Iconst ')' Sconst
+				{
+					PGTypeName *t = $1;
+					t->typmods = list_make2(makeIntConst(INTERVAL_FULL_RANGE, -1),
+											makeIntConst($3, @3));
+					$$ = makeStringConstCast($5, @5, t);
+				}
+			| NumericOnly							{ $$ = makeAConst($1, @1); }
+			| DEFAULT								{ $$ = NULL; }
+			| LOCAL									{ $$ = NULL; }
+		;
+
+
+var_list:	var_value								{ $$ = list_make1($1); }
+			| var_list ',' var_value				{ $$ = lappend($1, $3); }
+		;
+#line 1 "./grammar/statements/load.y"
+/*****************************************************************************
+ *
+ *		QUERY:
+ *				LOAD "filename"
+ *
+ *****************************************************************************/
+LoadStmt:	LOAD file_name
+				{
+					PGLoadStmt *n = makeNode(PGLoadStmt);
+					n->filename = $2;
+					n->repository = NULL;
+					n->repo_is_alias = false;
+					n->version = NULL;
+					n->load_type = PG_LOAD_TYPE_LOAD;
+					$$ = (PGNode *)n;
+				} |
+				opt_force INSTALL file_name opt_ext_version {
+                    PGLoadStmt *n = makeNode(PGLoadStmt);
+                    n->filename = $3;
+                    n->repository = NULL;
+                    n->repo_is_alias = false;
+                    n->version = $4;
+                    n->load_type = $1;
+                    $$ = (PGNode *)n;
+				} |
+				opt_force INSTALL file_name FROM ColId opt_ext_version {
+                    PGLoadStmt *n = makeNode(PGLoadStmt);
+                    n->repository = $5;
+                    n->repo_is_alias = true;
+                    n->filename = $3;
+                    n->version = $6;
+                    n->load_type = $1;
+                    $$ = (PGNode *)n;
+				} |
+				opt_force INSTALL file_name FROM Sconst opt_ext_version {
+                    PGLoadStmt *n = makeNode(PGLoadStmt);
+                    n->filename = $3;
+                    n->repository = $5;
+                    n->repo_is_alias = false;
+                    n->version = $6;
+                    n->load_type = $1;
+                    $$ = (PGNode *)n;
+				}
+		;
+
+opt_force:	/* empty*/							{ $$ = PG_LOAD_TYPE_INSTALL; } |
+            FORCE                               { $$ = PG_LOAD_TYPE_FORCE_INSTALL; };
+
+file_name:	Sconst								{ $$ = $1; } |
+            ColId                               { $$ = $1; };
+
+opt_ext_version:
+               /* empty */                      { $$ = NULL; } |
+                VERSION_P Sconst				{ $$ = $2; } |
+                VERSION_P ColId                 { $$ = $2; };
+#line 1 "./grammar/statements/vacuum.y"
+/*****************************************************************************
+ *
+ *		QUERY:
+ *				VACUUM
+ *				ANALYZE
+ *
+ *****************************************************************************/
+VacuumStmt: VACUUM opt_full opt_freeze opt_verbose
+				{
+					PGVacuumStmt *n = makeNode(PGVacuumStmt);
+					n->options = PG_VACOPT_VACUUM;
+					if ($2)
+						n->options |= PG_VACOPT_FULL;
+					if ($3)
+						n->options |= PG_VACOPT_FREEZE;
+					if ($4)
+						n->options |= PG_VACOPT_VERBOSE;
+					n->relation = NULL;
+					n->va_cols = NIL;
+					$$ = (PGNode *)n;
+				}
+			| VACUUM opt_full opt_freeze opt_verbose qualified_name opt_name_list
+				{
+					PGVacuumStmt *n = makeNode(PGVacuumStmt);
+					n->options = PG_VACOPT_VACUUM;
+					if ($2)
+						n->options |= PG_VACOPT_FULL;
+					if ($3)
+						n->options |= PG_VACOPT_FREEZE;
+					if ($4)
+						n->options |= PG_VACOPT_VERBOSE;
+					n->relation = $5;
+					n->va_cols = $6;
+					$$ = (PGNode *)n;
+				}
+			| VACUUM opt_full opt_freeze opt_verbose AnalyzeStmt
+				{
+					PGVacuumStmt *n = (PGVacuumStmt *) $5;
+					n->options |= PG_VACOPT_VACUUM;
+					if ($2)
+						n->options |= PG_VACOPT_FULL;
+					if ($3)
+						n->options |= PG_VACOPT_FREEZE;
+					if ($4)
+						n->options |= PG_VACOPT_VERBOSE;
+					$$ = (PGNode *)n;
+				}
+			| VACUUM '(' vacuum_option_list ')'
+				{
+					PGVacuumStmt *n = makeNode(PGVacuumStmt);
+					n->options = PG_VACOPT_VACUUM | $3;
+					n->relation = NULL;
+					n->va_cols = NIL;
+					$$ = (PGNode *) n;
+				}
+			| VACUUM '(' vacuum_option_list ')' qualified_name opt_name_list
+				{
+					PGVacuumStmt *n = makeNode(PGVacuumStmt);
+					n->options = PG_VACOPT_VACUUM | $3;
+					n->relation = $5;
+					n->va_cols = $6;
+					if (n->va_cols != NIL)	/* implies analyze */
+						n->options |= PG_VACOPT_ANALYZE;
+					$$ = (PGNode *) n;
+				}
+		;
+
+
+vacuum_option_elem:
+			analyze_keyword		{ $$ = PG_VACOPT_ANALYZE; }
+			| VERBOSE			{ $$ = PG_VACOPT_VERBOSE; }
+			| FREEZE			{ $$ = PG_VACOPT_FREEZE; }
+			| FULL				{ $$ = PG_VACOPT_FULL; }
+			| IDENT
+				{
+					if (strcmp($1, "disable_page_skipping") == 0)
+						$$ = PG_VACOPT_DISABLE_PAGE_SKIPPING;
+					else
+						ereport(ERROR,
+								(errcode(PG_ERRCODE_SYNTAX_ERROR),
+							 errmsg("unrecognized VACUUM option \"%s\"", $1),
+									 parser_errposition(@1)));
+				}
+		;
+
+
+opt_full:	FULL									{ $$ = true; }
+			| /*EMPTY*/								{ $$ = false; }
+		;
+
+
+vacuum_option_list:
+			vacuum_option_elem								{ $$ = $1; }
+			| vacuum_option_list ',' vacuum_option_elem		{ $$ = $1 | $3; }
+		;
+
+
+opt_freeze: FREEZE									{ $$ = true; }
+			| /*EMPTY*/								{ $$ = false; }
+		;
+#line 1 "./grammar/statements/delete.y"
+/*****************************************************************************
+ *
+ *		QUERY:
+ *				DELETE STATEMENTS
+ *
+ *****************************************************************************/
+DeleteStmt: opt_with_clause DELETE_P FROM relation_expr_opt_alias
+			using_clause where_or_current_clause returning_clause
+				{
+					PGDeleteStmt *n = makeNode(PGDeleteStmt);
+					n->relation = $4;
+					n->usingClause = $5;
+					n->whereClause = $6;
+					n->returningList = $7;
+					n->withClause = $1;
+					$$ = (PGNode *)n;
+				}
+			| TRUNCATE opt_table relation_expr_opt_alias
+			    {
+					PGDeleteStmt *n = makeNode(PGDeleteStmt);
+					n->relation = $3;
+					n->usingClause = NULL;
+					n->whereClause = NULL;
+					n->returningList = NULL;
+					n->withClause = NULL;
+					$$ = (PGNode *)n;
+			    }
+		;
+
+
+relation_expr_opt_alias: relation_expr					%prec UMINUS
+				{
+					$$ = $1;
+				}
+			| relation_expr ColId
+				{
+					PGAlias *alias = makeNode(PGAlias);
+					alias->aliasname = $2;
+					$1->alias = alias;
+					$$ = $1;
+				}
+			| relation_expr AS ColId
+				{
+					PGAlias *alias = makeNode(PGAlias);
+					alias->aliasname = $3;
+					$1->alias = alias;
+					$$ = $1;
+				}
+		;
+
+
+where_or_current_clause:
+			WHERE a_expr							{ $$ = $2; }
+			| /*EMPTY*/								{ $$ = NULL; }
+		;
+
+
+
+using_clause:
+				USING from_list_opt_comma						{ $$ = $2; }
+			| /*EMPTY*/								{ $$ = NIL; }
+		;
+#line 1 "./grammar/statements/analyze.y"
+/*****************************************************************************
+ *
+ *		QUERY:
+ *				VACUUM
+ *				ANALYZE
+ *
+ *****************************************************************************/
+AnalyzeStmt:
+			analyze_keyword opt_verbose
+				{
+					PGVacuumStmt *n = makeNode(PGVacuumStmt);
+					n->options = PG_VACOPT_ANALYZE;
+					if ($2)
+						n->options |= PG_VACOPT_VERBOSE;
+					n->relation = NULL;
+					n->va_cols = NIL;
+					$$ = (PGNode *)n;
+				}
+			| analyze_keyword opt_verbose qualified_name opt_name_list
+				{
+					PGVacuumStmt *n = makeNode(PGVacuumStmt);
+					n->options = PG_VACOPT_ANALYZE;
+					if ($2)
+						n->options |= PG_VACOPT_VERBOSE;
+					n->relation = $3;
+					n->va_cols = $4;
+					$$ = (PGNode *)n;
+				}
+		;
 #line 1 "./grammar/statements/attach.y"
 /*****************************************************************************
  *
@@ -8663,326 +8865,245 @@ ident_list:
 			ident_name								{ $$ = list_make1($1); }
 			| ident_list ',' ident_name				{ $$ = lappend($1, $3); }
 		;
-#line 1 "./grammar/statements/create_function.y"
-/*****************************************************************************
- *
- * CREATE FUNCTION stmt
- *
-  *****************************************************************************/
- CreateFunctionStmt:
-                /* the OptTemp is present but not used - to avoid conflicts with other CREATE_P Stmtatements */
-		CREATE_P OptTemp macro_alias qualified_name table_macro_list
+#line 1 "./grammar/statements/variable_reset.y"
+VariableResetStmt:
+			RESET reset_rest
 			{
-				PGCreateFunctionStmt *n = makeNode(PGCreateFunctionStmt);
-				$4->relpersistence = $2;
-				n->name = $4;
-				n->functions = $5;
-				n->onconflict = PG_ERROR_ON_CONFLICT;
-				$$ = (PGNode *)n;
+				$2->scope = VAR_SET_SCOPE_DEFAULT;
+				$$ = (PGNode *) $2;
 			}
- 		|
- 		CREATE_P OptTemp macro_alias IF_P NOT EXISTS qualified_name table_macro_list
-			{
-				PGCreateFunctionStmt *n = makeNode(PGCreateFunctionStmt);
-				$7->relpersistence = $2;
-				n->name = $7;
-				n->functions = $8;
-				n->onconflict = PG_IGNORE_ON_CONFLICT;
-				$$ = (PGNode *)n;
-
-			}
-		|
-		CREATE_P OR REPLACE OptTemp macro_alias qualified_name table_macro_list
-			{
-				PGCreateFunctionStmt *n = makeNode(PGCreateFunctionStmt);
-				$6->relpersistence = $4;
-				n->name = $6;
-				n->functions = $7;
-				n->onconflict = PG_REPLACE_ON_CONFLICT;
-				$$ = (PGNode *)n;
-			}
-		|
-		CREATE_P OptTemp macro_alias qualified_name macro_definition_list
-             {
-				PGCreateFunctionStmt *n = makeNode(PGCreateFunctionStmt);
-				$4->relpersistence = $2;
-				n->name = $4;
-				n->functions = $5;
-				n->onconflict = PG_ERROR_ON_CONFLICT;
-				$$ = (PGNode *)n;
-             }
-		|
-		CREATE_P OptTemp macro_alias IF_P NOT EXISTS qualified_name macro_definition_list
-			 {
-				PGCreateFunctionStmt *n = makeNode(PGCreateFunctionStmt);
-				$7->relpersistence = $2;
-				n->name = $7;
-				n->functions = $8;
-				n->onconflict = PG_IGNORE_ON_CONFLICT;
-				$$ = (PGNode *)n;
-			 }
-		|
-		CREATE_P OR REPLACE OptTemp macro_alias qualified_name macro_definition_list
-			 {
-				PGCreateFunctionStmt *n = makeNode(PGCreateFunctionStmt);
-				$6->relpersistence = $4;
-				n->name = $6;
-				n->functions = $7;
-				n->onconflict = PG_REPLACE_ON_CONFLICT;
-				$$ = (PGNode *)n;
-			 }
- 		;
-
-table_macro_definition:
-		param_list AS TABLE select_no_parens
-			{
-				PGFunctionDefinition *n = makeNode(PGFunctionDefinition);
-				n->params = $1;
-				n->query = $4;
-				$$ = (PGNode *)n;
-			}
-	;
-
-table_macro_definition_parens:
-		param_list AS TABLE select_with_parens
-			{
-				PGFunctionDefinition *n = makeNode(PGFunctionDefinition);
-				n->params = $1;
-				n->query = $4;
-				$$ = (PGNode *)n;
-			}
-	;
-
-table_macro_list_internal:
-		table_macro_definition_parens
-			{
-				$$ = list_make1($1);
-			}
-		| table_macro_list_internal ',' table_macro_definition_parens
-			{
-				$$ = lappend($1, $3);
-			}
-	;
-
-table_macro_list:
-		table_macro_definition
-			{
-				$$ = list_make1($1);
-			}
-		| table_macro_list_internal
-	;
-
-macro_definition:
-		param_list AS a_expr
-			{
-				PGFunctionDefinition *n = makeNode(PGFunctionDefinition);
-				n->params = $1;
-				n->function = $3;
-				$$ = (PGNode *)n;
-			}
-	;
-
-macro_definition_list:  macro_definition
+			| RESET LOCAL reset_rest
 				{
-					$$ = list_make1($1);
+					$3->scope = VAR_SET_SCOPE_LOCAL;
+					$$ = (PGNode *) $3;
 				}
-			| macro_definition_list ',' macro_definition
+			| RESET SESSION reset_rest
 				{
-					$$ = lappend($1, $3);
+					$3->scope = VAR_SET_SCOPE_SESSION;
+					$$ = (PGNode *) $3;
+				}
+			| RESET GLOBAL reset_rest
+				{
+					$3->scope = VAR_SET_SCOPE_GLOBAL;
+					$$ = (PGNode *) $3;
+				}
+			| RESET VARIABLE_P reset_rest
+				{
+					$3->scope = VAR_SET_SCOPE_VARIABLE;
+					$$ = (PGNode *) $3;
 				}
 		;
 
-macro_alias:
-		FUNCTION
-		| MACRO
+
+generic_reset:
+			var_name
+				{
+					PGVariableSetStmt *n = makeNode(PGVariableSetStmt);
+					n->kind = VAR_RESET;
+					n->name = $1;
+					$$ = n;
+				}
+			| ALL
+				{
+					PGVariableSetStmt *n = makeNode(PGVariableSetStmt);
+					n->kind = VAR_RESET_ALL;
+					$$ = n;
+				}
+		;
 
 
-param_list:
-		'(' ')'
-			{
-				$$ = NIL;
+reset_rest:
+			generic_reset							{ $$ = $1; }
+			| TIME ZONE
+				{
+					PGVariableSetStmt *n = makeNode(PGVariableSetStmt);
+					n->kind = VAR_RESET;
+					n->name = (char*) "timezone";
+					$$ = n;
+				}
+			| TRANSACTION ISOLATION LEVEL
+				{
+					PGVariableSetStmt *n = makeNode(PGVariableSetStmt);
+					n->kind = VAR_RESET;
+					n->name = (char*) "transaction_isolation";
+					$$ = n;
+				}
+		;
+#line 1 "./grammar/statements/variable_show.y"
+/* allows SET or RESET without LOCAL */
+VariableShowStmt:
+			show_or_describe SelectStmt {
+				PGVariableShowSelectStmt *n = makeNode(PGVariableShowSelectStmt);
+				n->stmt = $2;
+				n->name = (char*) "select";
+				n->is_summary = 0;
+				$$ = (PGNode *) n;
 			}
-		| '(' func_arg_list ')'
-			{
-				$$ = $2;
+		 | SUMMARIZE SelectStmt {
+				PGVariableShowSelectStmt *n = makeNode(PGVariableShowSelectStmt);
+				n->stmt = $2;
+				n->name = (char*) "select";
+				n->is_summary = 1;
+				$$ = (PGNode *) n;
 			}
-	;
-#line 1 "./grammar/statements/analyze.y"
+		 | SUMMARIZE qualified_name
+			{
+				PGVariableShowStmt *n = makeNode(PGVariableShowStmt);
+				n->relation = $2;
+				n->is_summary = 1;
+				$$ = (PGNode *) n;
+			}
+		 | show_or_describe qualified_name
+			{
+				PGVariableShowStmt *n = makeNode(PGVariableShowStmt);
+				n->relation = $2;
+				n->is_summary = 0;
+				$$ = (PGNode *) n;
+			}
+		| show_or_describe TIME ZONE
+			{
+				PGVariableShowStmt *n = makeNode(PGVariableShowStmt);
+				n->set = (char*) "timezone";
+				n->is_summary = 0;
+				$$ = (PGNode *) n;
+			}
+		| show_or_describe TRANSACTION ISOLATION LEVEL
+			{
+				PGVariableShowStmt *n = makeNode(PGVariableShowStmt);
+				n->set = (char*) "transaction_isolation";
+				n->is_summary = 0;
+				$$ = (PGNode *) n;
+			}
+		| show_or_describe ALL opt_tables
+			{
+				PGVariableShowStmt *n = makeNode(PGVariableShowStmt);
+				n->set = (char*) "__show_tables_expanded";
+				n->is_summary = 0;
+				$$ = (PGNode *) n;
+			}
+		| show_or_describe
+			{
+				PGVariableShowStmt *n = makeNode(PGVariableShowStmt);
+				n->set = (char*) "__show_tables_expanded";
+				n->is_summary = 0;
+				$$ = (PGNode *) n;
+			}
+		;
+
+describe_or_desc: DESCRIBE | DESC_P
+
+show_or_describe: SHOW | describe_or_desc
+
+opt_tables: TABLES | /* empty */
+
+var_name:	ColId								{ $$ = $1; }
+			| var_name '.' ColId
+				{ $$ = psprintf("%s.%s", $1, $3); }
+		;
+#line 1 "./grammar/statements/call.y"
 /*****************************************************************************
  *
- *		QUERY:
- *				VACUUM
- *				ANALYZE
+ * CALL <proc_name> [(params, ...)]
  *
  *****************************************************************************/
-AnalyzeStmt:
-			analyze_keyword opt_verbose
+CallStmt: CALL_P func_application
 				{
-					PGVacuumStmt *n = makeNode(PGVacuumStmt);
-					n->options = PG_VACOPT_ANALYZE;
-					if ($2)
-						n->options |= PG_VACOPT_VERBOSE;
-					n->relation = NULL;
-					n->va_cols = NIL;
-					$$ = (PGNode *)n;
-				}
-			| analyze_keyword opt_verbose qualified_name opt_name_list
-				{
-					PGVacuumStmt *n = makeNode(PGVacuumStmt);
-					n->options = PG_VACOPT_ANALYZE;
-					if ($2)
-						n->options |= PG_VACOPT_VERBOSE;
-					n->relation = $3;
-					n->va_cols = $4;
-					$$ = (PGNode *)n;
+					PGCallStmt *n = makeNode(PGCallStmt);
+					n->func = $2;
+					$$ = (PGNode *) n;
 				}
 		;
-#line 1 "./grammar/statements/pragma.y"
+#line 1 "./grammar/statements/view.y"
 /*****************************************************************************
  *
- * PRAGMA stmt
+ *	QUERY:
+ *		CREATE [ OR REPLACE ] [ TEMP ] VIEW <viewname> '('target-list ')'
+ *			AS <query> [ WITH [ CASCADED | LOCAL ] CHECK OPTION ]
  *
  *****************************************************************************/
-PragmaStmt:
-			PRAGMA_P ColId
+ViewStmt: CREATE_P OptTemp VIEW qualified_name opt_column_list opt_reloptions
+				AS SelectStmt opt_check_option
 				{
-					PGPragmaStmt *n = makeNode(PGPragmaStmt);
-					n->kind = PG_PRAGMA_TYPE_NOTHING;
-					n->name = $2;
-					$$ = (PGNode *)n;
+					PGViewStmt *n = makeNode(PGViewStmt);
+					n->view = $4;
+					n->view->relpersistence = $2;
+					n->aliases = $5;
+					n->query = $8;
+					n->onconflict = PG_ERROR_ON_CONFLICT;
+					n->options = $6;
+					n->withCheckOption = $9;
+					$$ = (PGNode *) n;
 				}
-			| PRAGMA_P ColId '=' var_list
+		| CREATE_P OptTemp VIEW IF_P NOT EXISTS qualified_name opt_column_list opt_reloptions
+				AS SelectStmt opt_check_option
 				{
-					PGPragmaStmt *n = makeNode(PGPragmaStmt);
-					n->kind = PG_PRAGMA_TYPE_ASSIGNMENT;
-					n->name = $2;
-					n->args = $4;
-					$$ = (PGNode *)n;
+					PGViewStmt *n = makeNode(PGViewStmt);
+					n->view = $7;
+					n->view->relpersistence = $2;
+					n->aliases = $8;
+					n->query = $11;
+					n->onconflict = PG_IGNORE_ON_CONFLICT;
+					n->options = $9;
+					n->withCheckOption = $12;
+					$$ = (PGNode *) n;
 				}
-			| PRAGMA_P ColId '(' func_arg_list ')'
+		| CREATE_P OR REPLACE OptTemp VIEW qualified_name opt_column_list opt_reloptions
+				AS SelectStmt opt_check_option
 				{
-					PGPragmaStmt *n = makeNode(PGPragmaStmt);
-					n->kind = PG_PRAGMA_TYPE_CALL;
-					n->name = $2;
-					n->args = $4;
-					$$ = (PGNode *)n;
+					PGViewStmt *n = makeNode(PGViewStmt);
+					n->view = $6;
+					n->view->relpersistence = $4;
+					n->aliases = $7;
+					n->query = $10;
+					n->onconflict = PG_REPLACE_ON_CONFLICT;
+					n->options = $8;
+					n->withCheckOption = $11;
+					$$ = (PGNode *) n;
 				}
-		;
-
-#line 1 "./grammar/statements/drop_secret.y"
-/*****************************************************************************
- *
- * Drop a secret
- *
- *****************************************************************************/
-DropSecretStmt:
-			DROP opt_persist SECRET ColId opt_storage_drop_specifier
+		| CREATE_P OptTemp RECURSIVE VIEW qualified_name '(' columnList ')' opt_reloptions
+				AS SelectStmt opt_check_option
 				{
-					PGDropSecretStmt *n = makeNode(PGDropSecretStmt);
-					n->persist_type = $2;
-					n->secret_name = $4;
-					n->secret_storage = $5;
-					n->missing_ok  = false;
-					$$ = (PGNode *)n;
+					PGViewStmt *n = makeNode(PGViewStmt);
+					n->view = $5;
+					n->view->relpersistence = $2;
+					n->aliases = $7;
+					n->query = makeRecursiveViewSelect(n->view->relname, n->aliases, $11);
+					n->onconflict = PG_ERROR_ON_CONFLICT;
+					n->options = $9;
+					n->withCheckOption = $12;
+					if (n->withCheckOption != PG_NO_CHECK_OPTION)
+						ereport(ERROR,
+								(errcode(PG_ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("WITH CHECK OPTION not supported on recursive views"),
+								 parser_errposition(@12)));
+					$$ = (PGNode *) n;
 				}
-            | DROP opt_persist SECRET IF_P EXISTS ColId opt_storage_drop_specifier
-                {
-                    PGDropSecretStmt *n = makeNode(PGDropSecretStmt);
-                    n->persist_type = $2;
-                    n->secret_name = $6;
-                    n->secret_storage = $7;
-                    n->missing_ok  = true;
-                    $$ = (PGNode *)n;
-                }
-		;
-
-opt_storage_drop_specifier:
-        /* empty */                                 { $$ = pstrdup(""); }
-        | FROM IDENT                                { $$ = $2; }
-    ;
-#line 1 "./grammar/statements/transaction.y"
-TransactionStmt:
-			ABORT_P opt_transaction
+		| CREATE_P OR REPLACE OptTemp RECURSIVE VIEW qualified_name '(' columnList ')' opt_reloptions
+				AS SelectStmt opt_check_option
 				{
-					PGTransactionStmt *n = makeNode(PGTransactionStmt);
-					n->kind = PG_TRANS_STMT_ROLLBACK;
-					n->options = NIL;
-					n->transaction_type = PG_TRANS_TYPE_DEFAULT;
-					$$ = (PGNode *)n;
-				}
-			| BEGIN_P opt_transaction opt_transaction_type
-				{
-					PGTransactionStmt *n = makeNode(PGTransactionStmt);
-					n->kind = PG_TRANS_STMT_BEGIN;
-					n->transaction_type = $3;
-					$$ = (PGNode *)n;
-				}
-			| START opt_transaction opt_transaction_type
-				{
-					PGTransactionStmt *n = makeNode(PGTransactionStmt);
-					n->kind = PG_TRANS_STMT_START;
-					n->transaction_type = $3;
-					$$ = (PGNode *)n;
-				}
-			| COMMIT opt_transaction
-				{
-					PGTransactionStmt *n = makeNode(PGTransactionStmt);
-					n->kind = PG_TRANS_STMT_COMMIT;
-					n->options = NIL;
-					n->transaction_type = PG_TRANS_TYPE_DEFAULT;
-					$$ = (PGNode *)n;
-				}
-			| END_P opt_transaction
-				{
-					PGTransactionStmt *n = makeNode(PGTransactionStmt);
-					n->kind = PG_TRANS_STMT_COMMIT;
-					n->options = NIL;
-					n->transaction_type = PG_TRANS_TYPE_DEFAULT;
-					$$ = (PGNode *)n;
-				}
-			| ROLLBACK opt_transaction
-				{
-					PGTransactionStmt *n = makeNode(PGTransactionStmt);
-					n->kind = PG_TRANS_STMT_ROLLBACK;
-					n->options = NIL;
-					n->transaction_type = PG_TRANS_TYPE_DEFAULT;
-					$$ = (PGNode *)n;
+					PGViewStmt *n = makeNode(PGViewStmt);
+					n->view = $7;
+					n->view->relpersistence = $4;
+					n->aliases = $9;
+					n->query = makeRecursiveViewSelect(n->view->relname, n->aliases, $13);
+					n->onconflict = PG_REPLACE_ON_CONFLICT;
+					n->options = $11;
+					n->withCheckOption = $14;
+					if (n->withCheckOption != PG_NO_CHECK_OPTION)
+						ereport(ERROR,
+								(errcode(PG_ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("WITH CHECK OPTION not supported on recursive views"),
+								 parser_errposition(@14)));
+					$$ = (PGNode *) n;
 				}
 		;
 
 
-opt_transaction:	WORK							{}
-			| TRANSACTION							{}
-			| /*EMPTY*/								{}
-		;
-
-opt_transaction_type:
-			  READ_P ONLY							{ $$ = PG_TRANS_TYPE_READ_ONLY; }
-			| READ_P WRITE_P						{ $$ = PG_TRANS_TYPE_READ_WRITE; }
-			| /*EMPTY*/								{ $$ = PG_TRANS_TYPE_DEFAULT; }
-		;
-#line 1 "./grammar/statements/update.y"
-/*****************************************************************************
- *
- *		QUERY:
- *				PGUpdateStmt (UPDATE)
- *
- *****************************************************************************/
-UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
-			SET set_clause_list_opt_comma
-			from_clause
-			where_or_current_clause
-			returning_clause
-				{
-					PGUpdateStmt *n = makeNode(PGUpdateStmt);
-					n->relation = $3;
-					n->targetList = $5;
-					n->fromClause = $6;
-					n->whereClause = $7;
-					n->returningList = $8;
-					n->withClause = $1;
-					$$ = (PGNode *)n;
-				}
+opt_check_option:
+		WITH CHECK_P OPTION				{ $$ = CASCADED_CHECK_OPTION; }
+		| WITH CASCADED CHECK_P OPTION	{ $$ = CASCADED_CHECK_OPTION; }
+		| WITH LOCAL CHECK_P OPTION		{ $$ = PG_LOCAL_CHECK_OPTION; }
+		| /* EMPTY */					{ $$ = PG_NO_CHECK_OPTION; }
 		;
 #line 1 "./grammar/statements/create_as.y"
 /*****************************************************************************
@@ -9055,127 +9176,6 @@ create_as_target:
 					$$->viewQuery = NULL;
 					$$->skipData = false;		/* might get changed later */
 				}
-		;
-#line 1 "./grammar/statements/alter_sequence.y"
-/*****************************************************************************
- *
- *		QUERY :
- *				CREATE SEQUENCE seqname
- *				ALTER SEQUENCE seqname
- *
- *****************************************************************************/
-AlterSeqStmt:
-			ALTER SEQUENCE qualified_name SeqOptList
-				{
-					PGAlterSeqStmt *n = makeNode(PGAlterSeqStmt);
-					n->sequence = $3;
-					n->options = $4;
-					n->missing_ok = false;
-					$$ = (PGNode *)n;
-				}
-			| ALTER SEQUENCE IF_P EXISTS qualified_name SeqOptList
-				{
-					PGAlterSeqStmt *n = makeNode(PGAlterSeqStmt);
-					n->sequence = $5;
-					n->options = $6;
-					n->missing_ok = true;
-					$$ = (PGNode *)n;
-				}
-
-		;
-
-
-SeqOptList: SeqOptElem								{ $$ = list_make1($1); }
-			| SeqOptList SeqOptElem					{ $$ = lappend($1, $2); }
-		;
-
-
-opt_with:	WITH									{}
-			| WITH_LA								{}
-			| /*EMPTY*/								{}
-		;
-
-
-NumericOnly:
-			FCONST								{ $$ = makeFloat($1); }
-			| '+' FCONST						{ $$ = makeFloat($2); }
-			| '-' FCONST
-				{
-					$$ = makeFloat($2);
-					doNegateFloat($$);
-				}
-			| SignedIconst						{ $$ = makeInteger($1); }
-		;
-
-
-SeqOptElem: AS SimpleTypename
-				{
-					$$ = makeDefElem("as", (PGNode *)$2, @1);
-				}
-			| CACHE NumericOnly
-				{
-					$$ = makeDefElem("cache", (PGNode *)$2, @1);
-				}
-			| CYCLE
-				{
-					$$ = makeDefElem("cycle", (PGNode *)makeInteger(true), @1);
-				}
-			| NO CYCLE
-				{
-					$$ = makeDefElem("cycle", (PGNode *)makeInteger(false), @1);
-				}
-			| INCREMENT opt_by NumericOnly
-				{
-					$$ = makeDefElem("increment", (PGNode *)$3, @1);
-				}
-			| MAXVALUE NumericOnly
-				{
-					$$ = makeDefElem("maxvalue", (PGNode *)$2, @1);
-				}
-			| MINVALUE NumericOnly
-				{
-					$$ = makeDefElem("minvalue", (PGNode *)$2, @1);
-				}
-			| NO MAXVALUE
-				{
-					$$ = makeDefElem("maxvalue", NULL, @1);
-				}
-			| NO MINVALUE
-				{
-					$$ = makeDefElem("minvalue", NULL, @1);
-				}
-			| OWNED BY any_name
-				{
-					$$ = makeDefElem("owned_by", (PGNode *)$3, @1);
-				}
-			| SEQUENCE NAME_P any_name
-				{
-					/* not documented, only used by pg_dump */
-					$$ = makeDefElem("sequence_name", (PGNode *)$3, @1);
-				}
-			| START opt_with NumericOnly
-				{
-					$$ = makeDefElem("start", (PGNode *)$3, @1);
-				}
-			| RESTART
-				{
-					$$ = makeDefElem("restart", NULL, @1);
-				}
-			| RESTART opt_with NumericOnly
-				{
-					$$ = makeDefElem("restart", (PGNode *)$3, @1);
-				}
-		;
-
-
-opt_by:		BY				{}
-			| /* empty */	{}
-	  ;
-
-
-SignedIconst: Iconst								{ $$ = $1; }
-			| '+' Iconst							{ $$ = + $2; }
-			| '-' Iconst							{ $$ = - $2; }
 		;
 
 
