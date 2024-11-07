@@ -39,8 +39,8 @@ for arg in sys.argv[1:]:
 
 template_file = os.path.join(base_dir, 'grammar.y')
 target_file = os.path.join(base_dir, 'grammar.y.tmp')
-header_file = os.path.join(base_dir, 'grammar.hpp')
-source_file = os.path.join(base_dir, 'grammar.cpp')
+header_file = os.path.join(base_dir, 'grammar.h.inc')
+source_file = os.path.join(base_dir, 'grammar.cpp.inc')
 type_dir = os.path.join(base_dir, 'types')
 rule_dir = os.path.join(base_dir, 'statements')
 result_source = os.path.join(base_dir, 'grammar_out.cpp')
@@ -150,10 +150,10 @@ def get_file_contents(fpath, add_line_numbers=False):
             return result
 
 
-# grammar.hpp
+# grammar.h.inc
 text = text.replace("{{{ GRAMMAR_HEADER }}}", get_file_contents(header_file, True))
 
-# grammar.cpp
+# grammar.cpp.inc
 text = text.replace("{{{ GRAMMAR_SOURCE }}}", get_file_contents(source_file, True))
 
 # keyword list

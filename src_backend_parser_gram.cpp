@@ -1092,7 +1092,7 @@
 /* Copy the first part of user declarations.  */
 #line 1 "./grammar/grammar.y.tmp"
 
-#line 1 "./grammar/grammar.hpp"
+#line 1 "./grammar/grammar.h.inc"
 /*#define YYDEBUG 1*/
 /*-------------------------------------------------------------------------
  *
@@ -31674,7 +31674,7 @@ yyreturn:
 #line 83 "./grammar/statements/create_as.y"
 
 
-#line 1 "./grammar/grammar.cpp"
+#line 1 "./grammar/grammar.cpp.inc"
 /*
  * The signature of this function is required by bison.  However, we
  * ignore the passed yylloc and instead use the last token position
