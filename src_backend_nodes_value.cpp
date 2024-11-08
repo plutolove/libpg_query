@@ -31,7 +31,7 @@ namespace duckdb_libpgquery {
 /*
  *	makeInteger
  */
-PGValue *makeInteger(long i) {
+PGValue *makeInteger(int64_t i) {
 	PGValue *v = makeNode(PGValue);
 
 	v->type = T_PGInteger;

@@ -43,7 +43,7 @@ namespace duckdb_libpgquery {
 typedef struct PGValue {
 	PGNodeTag type; /* tag appropriately (eg. duckdb_libpgquery::T_PGString) */
 	union ValUnion {
-		long ival; /* machine integer */
+		int64_t ival; /* machine integer */
 		char *str; /* string */
 	} val;
 } PGValue;
@@ -52,7 +52,7 @@ typedef struct PGValue {
 #define floatVal(v) atof(((PGValue *)(v))->val.str)
 #define strVal(v) (((PGValue *)(v))->val.str)
 
-PGValue *makeInteger(long i);
+PGValue *makeInteger(int64_t i);
 PGValue *makeFloat(char *numericStr);
 PGValue *makeString(const char *str);
 PGValue *makeBitString(char *str);
